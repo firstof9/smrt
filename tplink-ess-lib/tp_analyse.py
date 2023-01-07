@@ -8,22 +8,24 @@ import socket, time, random, argparse, logging
 from protocol import Protocol
 from network import Network
 
+
 def show_packet(payload):
-        print(payload)
-        data = Protocol.decode(payload)
-        print("TEST: " + data.hex(" "))
-        try:
-            print(Protocol.analyze(data)[1])
-        except AssertionError:
-            return
-        except KeyError:
-            return
+    print(payload)
+    data = Protocol.decode(payload)
+    print("TEST: " + data.hex(" "))
+    try:
+        print(Protocol.analyze(data)[1])
+    except AssertionError:
+        return
+    except KeyError:
+        return
+
 
 def main():
 
     # Handle command-line parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--interface', '-i')
+    parser.add_argument("--interface", "-i")
     args = parser.parse_args()
 
     # Instantiate network driver
@@ -43,6 +45,6 @@ def main():
 
         time.sleep(0.1)
 
-if __name__ == '__main__':
-    main()
 
+if __name__ == "__main__":
+    main()

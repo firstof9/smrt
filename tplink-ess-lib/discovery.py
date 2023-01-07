@@ -10,6 +10,7 @@ from loglevel import loglevel
 
 logger = logging.getLogger(__name__)
 
+
 def discover_switches(interface=None):
     net = Network(interface)
     net.send(Protocol.DISCOVERY, {})
@@ -22,11 +23,12 @@ def discover_switches(interface=None):
             break
     return ret
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--interface', '-i')
-    parser.add_argument('--command', '-c', action="store_true")
-    parser.add_argument('--loglevel', '-l', type=loglevel, default='INFO')
+    parser.add_argument("--interface", "-i")
+    parser.add_argument("--command", "-c", action="store_true")
+    parser.add_argument("--loglevel", "-l", type=loglevel, default="INFO")
     args = parser.parse_args()
     logging.basicConfig(level=args.loglevel)
     try:
@@ -41,7 +43,8 @@ def main():
                 print(cmd)
             else:
                 print(ip, mac, *payload, sep="\n")
-                print("-"*16)
+                print("-" * 16)
+
 
 if __name__ == "__main__":
     main()
