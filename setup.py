@@ -8,7 +8,7 @@ README_FILE = PROJECT_DIR / "README.md"
 VERSION = "0.1"
 
 setup(
-    name="python-openevse-http",
+    name="tplink-ess-lib",
     version=VERSION,
     url="https://github.com/firstof9/smrt",
     download_url="https://github.com/firstof9/smrt",
