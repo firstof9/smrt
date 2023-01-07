@@ -10,8 +10,8 @@ VERSION = "0.1"
 setup(
     name="tplink-ess-lib",
     version=VERSION,
-    url="https://github.com/firstof9/smrt",
-    download_url="https://github.com/firstof9/smrt",
+    url="https://github.com/firstof9/tplink-ess-lib",
+    download_url="https://github.com/firstof9/tplink-ess-lib",
     author="firstof9",
     author_email="firstof9@gmail.com",
     description="Python package and software for the TP-Link TL-SG105E and TL-SG108E smart switches",
