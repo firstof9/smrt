@@ -6,6 +6,26 @@ from protocol import Protocol
 from network import Network, InterfaceProblem
 from binary import ports2byte, ports2list
 
+result_field_lookup = {
+    'Status': {
+        0: 'Enabled',
+        1: 'Disabled',
+    },
+    'Link Status': {
+        0: 'Link Down',
+        1: 'AUTO',
+        2: 'MH10',
+        3: 'MF10',
+        4: 'MH100',
+        5: '100Full',
+        6: '1000Full',
+    }
+}
+
+result_type_fields = {
+    'stats': ('Port', 'Status', 'Link Status', 'TxGoodPkt', 'TxBadPkt', 'RxGoodPkt', 'RxBadPkt')
+}
+
 
 def loglevel(x):
     try:
@@ -80,8 +100,14 @@ def main():
             header, payload = net.set(args.username, args.password, l)
         elif args.action in actions:
             header, payload = net.query(Protocol.GET, [(actions[args.action], b"")])
+        payload = [augment_result(r) for r in payload]
         print(*payload, sep="\n")
 
+def augment_result(result):
+    """convert generic results into a key:value dict where known"""
+    if fields := result_type_fields.get(result[1]):
+        return {k: result_field_lookup.get(k, {}).get(v, v) for k, v in zip(fields, result[2])}
+    return result
 
 def tabout(cmd):
     # Format help output
