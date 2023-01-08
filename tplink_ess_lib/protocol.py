@@ -432,7 +432,7 @@ class Protocol:
         elif kind == "pvid":
             value = struct.unpack("!bh", value) if value else None
         elif kind == "stat":
-            value = struct.unpack("!bbbiiii", value)
+            value = struct.unpack("!bbbIIII", value)
         elif kind == "bool":
             if len(value) == 0:
                 pass
