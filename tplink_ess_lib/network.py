@@ -3,8 +3,8 @@
 import netifaces
 import socket, random, logging
 
-from protocol import Protocol
-from binary import byte2ports, mac_to_str, mac_to_bytes
+from .protocol import Protocol
+from .binary import byte2ports, mac_to_str, mac_to_bytes
 
 logger = logging.getLogger(__name__)
 

@@ -8,6 +8,7 @@ from .network import Network, ConnectionProblem, InterfaceProblem
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class MissingInterface(Exception):
     """Exception for missing interface."""
 

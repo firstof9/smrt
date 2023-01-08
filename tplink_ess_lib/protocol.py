@@ -3,7 +3,7 @@
 import base64
 import struct
 from ipaddress import ip_address
-from binary import byte2ports, mac_to_str
+from .binary import byte2ports, mac_to_str
 
 
 class Protocol:
