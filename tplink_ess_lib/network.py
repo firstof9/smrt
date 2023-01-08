@@ -31,7 +31,11 @@ class Network:
         # - Specify MAC address ff:ff:ff:ff:ff:ff to go into "fake switch" mode, where we reply to other clients
 
         self.switch_mac = switch_mac
-        self.ip_address, self.host_mac = self.get_interface(interface)
+        if interface is None:
+            self.ip_address = None
+            self.host_mac = None
+        else:
+            self.ip_address, self.host_mac = self.get_interface(interface)
 
         self.sequence_id = random.randint(0, 1000)
 
