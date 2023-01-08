@@ -37,48 +37,52 @@ class Network:
         else:
             self.ip_address, self.host_mac = self.get_interface(interface)
 
-        self.sequence_id = random.randint(0, 1000)
+            self.sequence_id = random.randint(0, 1000)
 
-        self.header = Protocol.header["blank"].copy()
-        self.header.update(
-            {
-                "sequence_id": self.sequence_id,
-                "host_mac": mac_to_bytes(self.host_mac),
-                "switch_mac": mac_to_bytes(self.switch_mac),
-            }
-        )
+            self.header = Protocol.header["blank"].copy()
+            self.header.update(
+                {
+                    "sequence_id": self.sequence_id,
+                    "host_mac": mac_to_bytes(self.host_mac),
+                    "switch_mac": mac_to_bytes(self.switch_mac),
+                }
+            )
 
-        # Sending socket
-        self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            # Sending socket
+            self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-        if switch_mac == "fe:ff:ff:ff:ff:ff" or switch_mac == "ff:ff:ff:ff:ff:ff":
-            self.ss.bind((Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
-            self.ss.settimeout(10)
-        else:
-            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            self.ss.bind((self.ip_address, Network.UDP_RECEIVE_FROM_PORT))
-
-        # Receiving socket
-        self.rs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-        if switch_mac == "ff:ff:ff:ff:ff:ff":
-            # This is a signal that we'll be operating in fake switch mode, rather than sending out commands
-            # For this, we need to switch the way that the recieving socket binds, to bind locally instead.
-            self.rs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            self.rs.bind((self.ip_address, Network.UDP_SEND_TO_PORT))
-
-        else:
+            if switch_mac == "fe:ff:ff:ff:ff:ff" or switch_mac == "ff:ff:ff:ff:ff:ff":
+                self.ss.bind((Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
+                self.ss.settimeout(10)
+            else:
+                self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                try:
+                    self.ss.bind((self.ip_address, Network.UDP_RECEIVE_FROM_PORT))
+                except Exception as err:
+                    logger.error("Error attempting to bind interface: %s", err)
+                    raise InterfaceProblem
 
             # Receiving socket
-            self.rs.bind((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
-            self.rs.settimeout(10)
+            self.rs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+            if switch_mac == "ff:ff:ff:ff:ff:ff":
+                # This is a signal that we'll be operating in fake switch mode, rather than sending out commands
+                # For this, we need to switch the way that the recieving socket binds, to bind locally instead.
+                self.rs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                self.rs.bind((self.ip_address, Network.UDP_SEND_TO_PORT))
+
+            else:
+
+                # Receiving socket
+                self.rs.bind((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
+                self.rs.settimeout(10)
 
     def get_interface(self, interface=None) -> list | tuple:
         if interface is None:
             interfaces = netifaces.interfaces()
             if "lo" in interfaces:
                 interfaces.remove("lo")
-            if len(interfaces) > 1:
+            if len(interfaces) >= 1:
                 return interfaces
             return []
 
