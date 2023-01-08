@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import logging
 
-from protocol import Protocol
-from network import Network, ConnectionProblem, InterfaceProblem
+from .protocol import Protocol
+from .network import Network, ConnectionProblem, InterfaceProblem
 
 _LOGGER = logging.getLogger(__name__)
 
