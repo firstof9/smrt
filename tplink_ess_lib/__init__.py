@@ -38,6 +38,8 @@ class tplink_ess:
             try:
                 header, payload = net.receive()
                 switches[i] = (header, payload)
+                # [(1, 'type', 'TL-SG108E'), (2, 'hostname', 'TL-SG108E'), (3, 'mac', 'b0:4e:26:45:ee:d8'), (7, 'firmware', '1.0.0 Build 20171214 Rel.70905'), (8, 'hardware', 'TL-SG108E 3.0'), (9, 'dhcp', True), (4, 'ip_addr', IPv4Address('192.168.30.111')), (5, 'ip_mask', IPv4Address('255.255.255.0')), (6, 'gateway', IPv4Address('192.168.30.212'))]
+                i += 1
             except ConnectionProblem:
                 break
         return switches

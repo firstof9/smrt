@@ -72,7 +72,6 @@ class Network:
                 self.rs.bind((self.ip_address, Network.UDP_SEND_TO_PORT))
 
             else:
-
                 # Receiving socket
                 self.rs.bind((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
                 self.rs.settimeout(10)
