@@ -6,7 +6,7 @@ import socket, random, logging
 from protocol import Protocol
 from binary import byte2ports, mac_to_str, mac_to_bytes
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class ConnectionProblem(Exception):
@@ -49,18 +49,15 @@ class Network:
             )
 
             # Sending socket
-            self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 
             if switch_mac == "fe:ff:ff:ff:ff:ff" or switch_mac == "ff:ff:ff:ff:ff:ff":
                 self.ss.bind((Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
                 self.ss.settimeout(10)
             else:
+                # Set sending socket options
                 self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-                try:
-                    self.ss.bind((self.ip_address, Network.UDP_RECEIVE_FROM_PORT))
-                except Exception as err:
-                    logger.error("Error attempting to bind interface: %s", err)
-                    raise InterfaceProblem
+                self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
             # Receiving socket
             self.rs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -87,7 +84,7 @@ class Network:
 
         settings = []
         addrs = netifaces.ifaddresses(interface)
-        logger.debug("addrs:" + repr(addrs))
+        _LOGGER.debug("addrs:" + repr(addrs))
         if netifaces.AF_INET not in addrs:
             raise InterfaceProblem("not AF_INET address")
         if netifaces.AF_LINK not in addrs:
@@ -100,7 +97,7 @@ class Network:
             raise InterfaceProblem("no addr or broadcast for address")
         ip = addr["addr"]
 
-        logger.debug("get_interface: %s %s %s " % (interface, ip, mac))
+        _LOGGER.debug("get_interface: %s %s %s " % (interface, ip, mac))
 
         return ip, mac
 
@@ -113,10 +110,10 @@ class Network:
             }
         )
         packet = Protocol.assemble_packet(self.header, payload)
-        logger.debug("Sending Packet: " + packet.hex())
+        _LOGGER.debug("Sending Packet: " + packet.hex())
         packet = Protocol.encode(packet)
-        logger.debug("Sending Header:  " + str(self.header))
-        logger.debug("Sending Payload: " + str(payload))
+        _LOGGER.debug("Sending Header:  " + str(self.header))
+        _LOGGER.debug("Sending Payload: " + str(payload))
         if self.switch_mac == "ff:ff:ff:ff:ff:ff":
             self.rs.sendto(
                 packet, (Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT)
@@ -128,26 +125,27 @@ class Network:
         self.header = header
 
     def receive(self):
-        data = self.receive_socket(self.rs)
+        data = self.receive_socket()
         if data:
             data = Protocol.decode(data)
-            logger.debug("Receive Packet: " + data.hex())
+            _LOGGER.debug("Receive Packet: " + data.hex())
             header, payload = Protocol.split(data)
             header, payload = Protocol.interpret_header(
                 header
             ), Protocol.interpret_payload(payload)
-            logger.debug("Received Header:  " + str(header))
-            logger.debug("Received Payload: " + str(payload))
+            _LOGGER.debug("Received Header:  " + str(header))
+            _LOGGER.debug("Received Payload: " + str(payload))
             self.header["token_id"] = header["token_id"]
             return header, payload
         else:
             raise ConnectionProblem()
 
-    def receive_socket(self, socket):
+    def receive_socket(self):
         data = False
         try:
-            data, addr = socket.recvfrom(1500)
-        except:
+            data, addr = self.rs.recvfrom(1500)
+        except Exception as err:
+            _LOGGER.debug("Error: %s", err)
             return False
         return data
 

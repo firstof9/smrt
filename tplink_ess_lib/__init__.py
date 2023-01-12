@@ -37,8 +37,8 @@ class tplink_ess:
         while True:
             try:
                 header, payload = net.receive()
-                switches[i] = (header, payload)
-                # [(1, 'type', 'TL-SG108E'), (2, 'hostname', 'TL-SG108E'), (3, 'mac', 'b0:4e:26:45:ee:d8'), (7, 'firmware', '1.0.0 Build 20171214 Rel.70905'), (8, 'hardware', 'TL-SG108E 3.0'), (9, 'dhcp', True), (4, 'ip_addr', IPv4Address('192.168.30.111')), (5, 'ip_mask', IPv4Address('255.255.255.0')), (6, 'gateway', IPv4Address('192.168.30.212'))]
+                payload = self.parse_payload(payload)
+                switches[i] = payload
                 i += 1
             except ConnectionProblem:
                 break
@@ -68,3 +68,13 @@ class tplink_ess:
             self._data[action] = payload
 
         return self._data
+
+    def parse_payload(payload) -> dict:
+        """Parse the payload into a dict."""
+        _LOGGER.debug("Payload in: %s", payload)
+        output = {}
+        for item in payload:
+            type_id, type_name, data = item
+            output[type_name] = data
+        _LOGGER.debug("Payload parse: %s", output)
+        return output

@@ -1,10 +1,12 @@
 """Provide protocol encode/decoding functions."""
 
+import logging
 import base64
 import struct
 from ipaddress import ip_address
 from binary import byte2ports, mac_to_str
 
+_LOGGER = logging.getLogger(__name__)
 
 class Protocol:
     PACKET_END = b"\xff\xff\x00\x00"
