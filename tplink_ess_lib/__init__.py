@@ -4,33 +4,29 @@ from __future__ import annotations
 import logging
 
 from .protocol import Protocol
-from .network import Network, ConnectionProblem, InterfaceProblem
+from .network import Network, ConnectionProblem, InterfaceProblem, MissingMac
 
 _LOGGER = logging.getLogger(__name__)
-
-class MissingInterface(Exception):
-    """Exception for missing interface."""
-
 
 class tplink_ess:
     """Represent a tplink ess switch."""
 
     def __init__(
-        self, mac: str = "", interface: str = "", user: str = "", pwd: str = ""
+        self, host_mac: str = "", user: str = "", pwd: str = "", switch_mac = "",
     ) -> None:
         """Connect or discover a tplink ess switch on the network."""
         self._user = user
         self._pwd = pwd
-        self._mac = mac
-        self._interface = interface
+        self._host_mac = host_mac
+        self._switch_mac = switch_mac
         self._data = {}
 
     async def discovery(self) -> dict:
         """Return result of auto discovery as dict."""
-        if not self._interface:
-            _LOGGER.error("Interface not setup.")
-            raise MissingInterface
-        net = Network(self._interface)
+        if not self._host_mac:
+            _LOGGER.error("MAC address missing.")
+            raise MissingMac
+        net = Network(self._host_mac)
         net.send(Protocol.DISCOVERY, {})
         switches = {}
         i = 0
@@ -44,28 +40,20 @@ class tplink_ess:
                 break
         return switches
 
-    async def interfaces(self) -> list:
-        """Return result of interface discovery."""
-        interfaces = []
-        interface = None
-        net = Network(interface)
-        interfaces = net.get_interface()
-        return interfaces
-
     async def update_data(self) -> dict:
         """Refresh switch data."""
         try:
-            net = Network(self._interface, self._mac)
-        except InterfaceProblem as e:
+            net = Network(self._host_mac, self._switch_mac)
+        except MissingMac as e:
             _LOGGER.error("Problems with network interface: %s", e)
-            raise InterfaceProblem
+            raise MissingMac
         # Login to switch
         net.login(self._user, self._pwd)
         actions = Protocol.tp_ids
 
         for action in actions:
             header, payload = net.query(Protocol.GET, [(actions[action], b"")])
-            self._data[action] = payload
+            self._data[action] = self.parse_payload(payload)
 
         return self._data
 
