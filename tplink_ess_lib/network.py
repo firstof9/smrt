@@ -6,16 +6,18 @@ import socket, random, logging
 from .protocol import Protocol
 from .binary import byte2ports, mac_to_str, mac_to_bytes
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class ConnectionProblem(Exception):
-    pass
+    """Exception for connection problems."""
 
 
 class InterfaceProblem(Exception):
-    pass
+    """Exception for interface problems."""
 
+class MissingMac(Exception):
+    """Exception for missing MAC address."""
 
 class Network:
 
@@ -23,20 +25,14 @@ class Network:
     UDP_SEND_TO_PORT = 29808
     UDP_RECEIVE_FROM_PORT = 29809
 
-    def __init__(self, interface=None, switch_mac="00:00:00:00:00:00"):
-
-        # Normally, this module will be initialized with the MAC address of the switch we want to talk to
-        # There are however two other modes that might be used:
-        # - Specify MAC address fe:ff:ff:ff:ff:ff to go into broadcast listen mode. We use this to snoop on bidirectional traffic
-        # - Specify MAC address ff:ff:ff:ff:ff:ff to go into "fake switch" mode, where we reply to other clients
+    def __init__(self, mac=None, switch_mac="00:00:00:00:00:00"):
 
         self.switch_mac = switch_mac
-        if interface is None:
-            self.ip_address = None
-            self.host_mac = None
-        else:
-            self.ip_address, self.host_mac = self.get_interface(interface)
+        self.host_mac = mac
 
+        if self.host_mac is None:
+            raise MissingMac
+        else:
             self.sequence_id = random.randint(0, 1000)
 
             self.header = Protocol.header["blank"].copy()
@@ -49,61 +45,18 @@ class Network:
             )
 
             # Sending socket
-            self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 
-            if switch_mac == "fe:ff:ff:ff:ff:ff" or switch_mac == "ff:ff:ff:ff:ff:ff":
-                self.ss.bind((Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
-                self.ss.settimeout(10)
-            else:
-                self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-                try:
-                    self.ss.bind((self.ip_address, Network.UDP_RECEIVE_FROM_PORT))
-                except Exception as err:
-                    logger.error("Error attempting to bind interface: %s", err)
-                    raise InterfaceProblem
+            # Set sending socket options
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
             # Receiving socket
             self.rs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-            if switch_mac == "ff:ff:ff:ff:ff:ff":
-                # This is a signal that we'll be operating in fake switch mode, rather than sending out commands
-                # For this, we need to switch the way that the recieving socket binds, to bind locally instead.
-                self.rs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-                self.rs.bind((self.ip_address, Network.UDP_SEND_TO_PORT))
-
-            else:
-
-                # Receiving socket
-                self.rs.bind((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
-                self.rs.settimeout(10)
-
-    def get_interface(self, interface=None) -> list | tuple:
-        if interface is None:
-            interfaces = netifaces.interfaces()
-            if "lo" in interfaces:
-                interfaces.remove("lo")
-            if len(interfaces) >= 1:
-                return interfaces
-            return []
-
-        settings = []
-        addrs = netifaces.ifaddresses(interface)
-        logger.debug("addrs:" + repr(addrs))
-        if netifaces.AF_INET not in addrs:
-            raise InterfaceProblem("not AF_INET address")
-        if netifaces.AF_LINK not in addrs:
-            raise InterfaceProblem("not AF_LINK address")
-
-        mac = addrs[netifaces.AF_LINK][0]["addr"]
-        # take first address of interface
-        addr = addrs[netifaces.AF_INET][0]
-        if "broadcast" not in addr or "addr" not in addr:
-            raise InterfaceProblem("no addr or broadcast for address")
-        ip = addr["addr"]
-
-        logger.debug("get_interface: %s %s %s " % (interface, ip, mac))
-
-        return ip, mac
+            # Receiving socket
+            self.rs.bind((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
+            self.rs.settimeout(10)
 
     def send(self, op_code, payload):
         self.sequence_id = (self.sequence_id + 1) % 1000
@@ -114,41 +67,39 @@ class Network:
             }
         )
         packet = Protocol.assemble_packet(self.header, payload)
-        logger.debug("Sending Packet: " + packet.hex())
+        _LOGGER.debug("Sending Packet: " + packet.hex())
         packet = Protocol.encode(packet)
-        logger.debug("Sending Header:  " + str(self.header))
-        logger.debug("Sending Payload: " + str(payload))
-        if self.switch_mac == "ff:ff:ff:ff:ff:ff":
-            self.rs.sendto(
-                packet, (Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT)
-            )
-        else:
-            self.ss.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
+        _LOGGER.debug("Sending Header:  " + str(self.header))
+        _LOGGER.debug("Sending Payload: " + str(payload))
+
+        # Send packet
+        self.ss.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
 
     def setHeader(self, header):
         self.header = header
 
     def receive(self):
-        data = self.receive_socket(self.rs)
+        data = self.receive_socket()
         if data:
             data = Protocol.decode(data)
-            logger.debug("Receive Packet: " + data.hex())
+            _LOGGER.debug("Receive Packet: " + data.hex())
             header, payload = Protocol.split(data)
             header, payload = Protocol.interpret_header(
                 header
             ), Protocol.interpret_payload(payload)
-            logger.debug("Received Header:  " + str(header))
-            logger.debug("Received Payload: " + str(payload))
+            _LOGGER.debug("Received Header:  " + str(header))
+            _LOGGER.debug("Received Payload: " + str(payload))
             self.header["token_id"] = header["token_id"]
             return header, payload
         else:
             raise ConnectionProblem()
 
-    def receive_socket(self, socket):
+    def receive_socket(self):
         data = False
         try:
-            data, addr = socket.recvfrom(1500)
-        except:
+            data, addr = self.rs.recvfrom(1500)
+        except Exception as err:
+            _LOGGER.debug("Error: %s", err)
             return False
         return data
 
