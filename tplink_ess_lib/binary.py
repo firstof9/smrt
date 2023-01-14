@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+"""Binary helper for tplink_ess_lib."""
 
 SEP = ","
 
