@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 from .protocol import Protocol
-from .network import Network, ConnectionProblem, InterfaceProblem, MissingMac
+from .network import Network, ConnectionProblem, MissingMac
 
 _LOGGER = logging.getLogger(__name__)
 
