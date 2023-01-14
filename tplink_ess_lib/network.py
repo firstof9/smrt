@@ -55,7 +55,13 @@ class Network:
             self.rs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
             # Receiving socket
-            self.rs.bind((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
+            try:
+                self.rs.bind((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
+            except OSError:
+                self.rs.bind(('', Network.UDP_RECEIVE_FROM_PORT))
+            except Exception as err:
+                _LOGGER.error("Problem creating listener: %s", err)
+                raise InterfaceProblem
             self.rs.settimeout(10)
 
     def send(self, op_code, payload):
