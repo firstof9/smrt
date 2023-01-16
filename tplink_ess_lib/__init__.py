@@ -11,7 +11,7 @@ _LOGGER = logging.getLogger(__name__)
 class tplink_ess:
     """Represent a tplink ess switch."""
 
-    result_field_lookup = {
+    RESULT_FIELD_LOOKUP = {
         'Status': {
             0: 'Enabled',
             1: 'Disabled',
@@ -27,7 +27,7 @@ class tplink_ess:
         }
     }
 
-    result_type_fields = {
+    RESULT_TYPE_FIELDS = {
         'stats': ('Port', 'Status', 'Link Status', 'TxGoodPkt', 'TxBadPkt', 'RxGoodPkt', 'RxBadPkt')
     }
 
@@ -53,7 +53,7 @@ class tplink_ess:
             while True:
                 try:
                     header, payload = net.receive()
-                    switches.append(self.parse_payload(payload))
+                    switches.append(self.parse_discovery_response(payload))
                 except ConnectionProblem:
                     break
         return switches
@@ -82,11 +82,11 @@ class tplink_ess:
 
         for action in actions:
             header, payload = net.query(Protocol.GET, [(actions[action], b"")])
-            self._data[action] = self.parse_payload(payload)
+            self._data[action] = self.parse_discovery_response(payload)
 
         return self._data
 
-    def parse_payload(self, payload) -> dict:
+    def parse_discovery_response(self, payload) -> dict:
         """Parse the payload into a dict."""
         _LOGGER.debug("Payload in: %s", payload)
         output = {}
@@ -100,7 +100,7 @@ class tplink_ess:
         """Parse a list of records of the same type into a list of dicts"""
         output = []
         for type_id, type_name, data in payload:
-            if fields := self.result_type_fields.get(type_name):
-                data = {k: self.result_field_lookup.get(k, {}).get(v, v) for k, v in zip(fields, data)}
+            if fields := tplink_ess.RESULT_TYPE_FIELDS.get(type_name):
+                data = {k: tplink_ess.RESULT_FIELD_LOOKUP.get(k, {}).get(v, v) for k, v in zip(fields, data)}
             output.append(data)
         return output
