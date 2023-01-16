@@ -95,8 +95,14 @@ class tplink_ess:
         for type_id, type_name, data in payload:
             if type(data) in [tuple, list]:
                 if fields := tplink_ess.RESULT_TYPE_FIELDS.get(type_name):
-                    data = {k: tplink_ess.RESULT_FIELD_LOOKUP.get(k, {}).get(v, v) for k, v in zip(fields, data)}
-                    # TODO: include raw data
+                    mapped_data = {}
+                    for k, v in zip(fields, data):
+                        if mv := tplink_ess.RESULT_FIELD_LOOKUP.get(k):
+                            mapped_data[k] = mv.get(v)
+                            mapped_data[k + " Raw"] = v
+                        else:
+                            mapped_data[k] = v
+                    data = mapped_data
                 data_list = output.get(type_name, [])
                 data_list.append(data)
                 data = data_list
