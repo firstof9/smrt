@@ -49,7 +49,7 @@ class tplink_ess:
 
         switches = []
         with Network(self._host_mac) as net:
-            net.send(Protocol.DISCOVERY, {})
+            net.send(Network.BROADCAST_MAC, Protocol.DISCOVERY, {})
             while True:
                 try:
                     header, payload = net.receive()
@@ -64,8 +64,8 @@ class tplink_ess:
             _LOGGER.error("MAC address missing.")
             raise MissingMac
 
-        with Network(mac=self._host_mac, switch_mac=switch_mac) as net:
-            header, payload = net.query(Protocol.GET, [(Protocol.tp_ids[action], b'')])
+        with Network(host_mac=self._host_mac) as net:
+            header, payload = net.query(switch_mac, Protocol.GET, [(Protocol.tp_ids[action], b'')])
             return self.parse_query_response(payload)
 
 
