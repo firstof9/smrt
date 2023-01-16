@@ -55,7 +55,7 @@ class Network:
             except Exception as err:
                 _LOGGER.error("Problem creating listener: %s", err)
                 raise InterfaceProblem
-            self.rs.settimeout(2)
+            self.rs.settimeout(10)
 
     def __enter__(self):
         return self
