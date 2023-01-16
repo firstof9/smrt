@@ -1,10 +1,11 @@
 """Provide network interfacing functions."""
 
-import netifaces
-import socket, random, logging
+import logging
+import random
+import socket
 
+from .binary import mac_to_bytes
 from .protocol import Protocol
-from .binary import byte2ports, mac_to_str, mac_to_bytes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,8 +17,10 @@ class ConnectionProblem(Exception):
 class InterfaceProblem(Exception):
     """Exception for interface problems."""
 
+
 class MissingMac(Exception):
     """Exception for missing MAC address."""
+
 
 class Network:
 
@@ -64,6 +67,12 @@ class Network:
                 raise InterfaceProblem
             self.rs.settimeout(10)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.rs.close()
+
     def send(self, op_code, payload):
         self.sequence_id = (self.sequence_id + 1) % 1000
         self.header.update(
@@ -80,9 +89,6 @@ class Network:
 
         # Send packet
         self.ss.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
-
-    def setHeader(self, header):
-        self.header = header
 
     def receive(self):
         data = self.receive_socket()
