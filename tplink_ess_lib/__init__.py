@@ -21,23 +21,21 @@ class tplink_ess:
         self._switch_mac = switch_mac
         self._data = {}
 
-    async def discovery(self) -> dict:
+    async def discovery(self) -> list[dict]:
         """Return result of auto discovery as dict."""
         if not self._host_mac:
             _LOGGER.error("MAC address missing.")
             raise MissingMac
-        net = Network(self._host_mac)
-        net.send(Protocol.DISCOVERY, {})
-        switches = {}
-        i = 0
-        while True:
-            try:
-                header, payload = net.receive()
-                payload = self.parse_payload(payload)
-                switches[i] = payload
-                i += 1
-            except ConnectionProblem:
-                break
+
+        switches = []
+        with Network(self._host_mac) as net:
+            net.send(Protocol.DISCOVERY, {})
+            while True:
+                try:
+                    header, payload = net.receive()
+                    switches.append(self.parse_payload(payload))
+                except ConnectionProblem:
+                    break
         return switches
 
     async def update_data(self) -> dict:
@@ -57,7 +55,7 @@ class tplink_ess:
 
         return self._data
 
-    def parse_payload(payload) -> dict:
+    def parse_payload(self, payload) -> dict:
         """Parse the payload into a dict."""
         _LOGGER.debug("Payload in: %s", payload)
         output = {}
