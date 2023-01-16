@@ -28,17 +28,15 @@ class tplink_ess:
     }
 
     RESULT_TYPE_FIELDS = {
-        'stats': ('Port', 'Status', 'Link Status', 'TxGoodPkt', 'TxBadPkt', 'RxGoodPkt', 'RxBadPkt')
+        'stats': ('Port', 'Status', 'Link Status', 'TxGoodPkt', 'TxBadPkt', 'RxGoodPkt', 'RxBadPkt'),
+        'vlan': ('VLAN ID', 'Member Ports', 'Tagged Ports', 'VLAN Name'),
     }
 
-    def __init__(
-        self, host_mac: str = "", user: str = "", pwd: str = "", switch_mac = "",
-    ) -> None:
+    def __init__(self, host_mac: str = "", user: str = "", pwd: str = "") -> None:
         """Connect or discover a tplink ess switch on the network."""
         self._user = user
         self._pwd = pwd
         self._host_mac = host_mac
-        self._switch_mac = switch_mac
         self._data = {}
 
     async def discovery(self) -> list[dict]:
@@ -53,7 +51,7 @@ class tplink_ess:
             while True:
                 try:
                     header, payload = net.receive()
-                    switches.append(self.parse_discovery_response(payload))
+                    switches.append(self.parse_response(payload))
                 except ConnectionProblem:
                     break
         return switches
@@ -66,41 +64,47 @@ class tplink_ess:
 
         with Network(host_mac=self._host_mac) as net:
             header, payload = net.query(switch_mac, Protocol.GET, [(Protocol.tp_ids[action], b'')])
-            return self.parse_query_response(payload)
+            return self.parse_response(payload)
 
 
-    async def update_data(self) -> dict:
+    async def update_data(self, switch_mac) -> dict:
         """Refresh switch data."""
         try:
-            net = Network(self._host_mac, self._switch_mac)
+            net = Network(self._host_mac)
         except MissingMac as e:
             _LOGGER.error("Problems with network interface: %s", e)
             raise MissingMac
         # Login to switch
-        net.login(self._user, self._pwd)
+        net.login(switch_mac, self._user, self._pwd)
         actions = Protocol.tp_ids
 
         for action in actions:
-            header, payload = net.query(Protocol.GET, [(actions[action], b"")])
-            self._data[action] = self.parse_discovery_response(payload)
+            header, payload = net.query(switch_mac, Protocol.GET, [(actions[action], b"")])
+            self._data[action] = self.parse_response(payload)
 
         return self._data
 
-    def parse_discovery_response(self, payload) -> dict:
+    def parse_response(self, payload) -> dict:
         """Parse the payload into a dict."""
+        # all payloads are list of tuple:3. if the third value is a tuple/list, it can be field-mapped
         _LOGGER.debug("Payload in: %s", payload)
         output = {}
-        for item in payload:
-            type_id, type_name, data = item
+        for type_id, type_name, data in payload:
+            if type(data) in [tuple, list]:
+                if fields := tplink_ess.RESULT_TYPE_FIELDS.get(type_name):
+                    mapped_data = {}
+                    for k, v in zip(fields, data):
+                        if mv := tplink_ess.RESULT_FIELD_LOOKUP.get(k):
+                            mapped_data[k] = mv.get(v)
+                            mapped_data[k + " Raw"] = v
+                        else:
+                            mapped_data[k] = v
+                    data = mapped_data
+                data_list = output.get(type_name, [])
+                data_list.append(data)
+                data = data_list
+
             output[type_name] = data
         _LOGGER.debug("Payload parse: %s", output)
         return output
 
-    def parse_query_response(self, payload) -> list[dict]:
-        """Parse a list of records of the same type into a list of dicts"""
-        output = []
-        for type_id, type_name, data in payload:
-            if fields := tplink_ess.RESULT_TYPE_FIELDS.get(type_name):
-                data = {k: tplink_ess.RESULT_FIELD_LOOKUP.get(k, {}).get(v, v) for k, v in zip(fields, data)}
-            output.append(data)
-        return output
