@@ -32,14 +32,11 @@ class tplink_ess:
         'vlan': ('VLAN ID', 'Member Ports', 'Tagged Ports', 'VLAN Name'),
     }
 
-    def __init__(
-        self, host_mac: str = "", user: str = "", pwd: str = "", switch_mac = "",
-    ) -> None:
+    def __init__(self, host_mac: str = "", user: str = "", pwd: str = "") -> None:
         """Connect or discover a tplink ess switch on the network."""
         self._user = user
         self._pwd = pwd
         self._host_mac = host_mac
-        self._switch_mac = switch_mac
         self._data = {}
 
     async def discovery(self) -> list[dict]:
@@ -50,7 +47,7 @@ class tplink_ess:
 
         switches = []
         with Network(self._host_mac) as net:
-            net.send(Protocol.DISCOVERY, {})
+            net.send(Network.BROADCAST_MAC, Protocol.DISCOVERY, {})
             while True:
                 try:
                     header, payload = net.receive()
@@ -65,24 +62,24 @@ class tplink_ess:
             _LOGGER.error("MAC address missing.")
             raise MissingMac
 
-        with Network(mac=self._host_mac, switch_mac=switch_mac) as net:
-            header, payload = net.query(Protocol.GET, [(Protocol.tp_ids[action], b'')])
+        with Network(host_mac=self._host_mac) as net:
+            header, payload = net.query(switch_mac, Protocol.GET, [(Protocol.tp_ids[action], b'')])
             return self.parse_response(payload)
 
 
-    async def update_data(self) -> dict:
+    async def update_data(self, switch_mac) -> dict:
         """Refresh switch data."""
         try:
-            net = Network(self._host_mac, self._switch_mac)
+            net = Network(self._host_mac)
         except MissingMac as e:
             _LOGGER.error("Problems with network interface: %s", e)
             raise MissingMac
         # Login to switch
-        net.login(self._user, self._pwd)
+        net.login(switch_mac, self._user, self._pwd)
         actions = Protocol.tp_ids
 
         for action in actions:
-            header, payload = net.query(Protocol.GET, [(actions[action], b"")])
+            header, payload = net.query(switch_mac, Protocol.GET, [(actions[action], b"")])
             self._data[action] = self.parse_response(payload)
 
         return self._data
@@ -110,3 +107,4 @@ class tplink_ess:
             output[type_name] = data
         _LOGGER.debug("Payload parse: %s", output)
         return output
+
