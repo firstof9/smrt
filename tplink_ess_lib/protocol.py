@@ -179,7 +179,7 @@ class Protocol:
         if kind == "str":
             value = value.split(b"\x00", 1)[0].decode("ascii")
         elif kind == "ip":
-            value = ip_address(value)
+            value = f'{ip_address(value):s}'
         elif kind == "hex":
             value = mac_to_str(value)
         elif kind == "action":
