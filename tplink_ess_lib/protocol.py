@@ -1,12 +1,14 @@
 """Provide protocol encode/decoding functions."""
 
-import logging
 import base64
+import logging
 import struct
 from ipaddress import ip_address
+
 from .binary import byte2ports, mac_to_str
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class Protocol:
     PACKET_END = b"\xff\xff\x00\x00"
@@ -99,15 +101,18 @@ class Protocol:
 
     tp_ids = {v[1]: k for k, v in ids_tp.items()}
 
+    @staticmethod
     def get_sequence_kind(sequence):
         for key, value in Protocol.sequences.items():
             if value == sequence:
                 return key
         return "unknown"
 
+    @staticmethod
     def get_id(name):
         return Protocol.tp_ids[name]
 
+    @staticmethod
     def decode(data):
         data = bytearray(data)
         s = bytearray(Protocol.KEY)
@@ -121,23 +126,26 @@ class Protocol:
 
     encode = decode
 
+    @staticmethod
     def split(data):
         if len(data) < Protocol.header["len"] + len(Protocol.PACKET_END):
             raise AssertionError("invalid data length")
         if not data.endswith(Protocol.PACKET_END):
             raise AssertionError("data without packet end")
-        return (data[0 : Protocol.header["len"]], data[Protocol.header["len"] :])
+        return data[0: Protocol.header["len"]], data[Protocol.header["len"]:]
 
+    @staticmethod
     def interpret_header(header):
         names = Protocol.header["blank"].keys()
         vals = struct.unpack(Protocol.header["fmt"], header)
         return dict(zip(names, vals))
 
+    @staticmethod
     def interpret_payload(payload):
         results = []
         while len(payload) > len(Protocol.PACKET_END):
             dtype, dlen = struct.unpack("!hh", payload[0:4])
-            data = payload[4 : 4 + dlen]
+            data = payload[4: 4 + dlen]
             results.append(
                 (
                     dtype,
@@ -145,25 +153,28 @@ class Protocol:
                     Protocol.interpret_value(data, Protocol.ids_tp[dtype][0]),
                 )
             )
-            payload = payload[4 + dlen :]
+            payload = payload[4 + dlen:]
         return results
 
+    @staticmethod
     def analyze(data):
         header, payload = Protocol.split(data)
         return Protocol.interpret_header(header), Protocol.interpret_payload(payload)
 
+    @staticmethod
     def assemble_packet(header, payload):
         payload_bytes = b""
         for dtype, value in payload:
             payload_bytes += struct.pack("!hh", dtype, len(value))
             payload_bytes += value
         header["check_length"] = (
-            Protocol.header["len"] + len(payload_bytes) + len(Protocol.PACKET_END)
+                Protocol.header["len"] + len(payload_bytes) + len(Protocol.PACKET_END)
         )
         header = tuple(header[part] for part in Protocol.header["blank"].keys())
         header_bytes = struct.pack(Protocol.header["fmt"], *header)
         return header_bytes + payload_bytes + Protocol.PACKET_END
 
+    @staticmethod
     def interpret_value(value, kind):
         if kind == "str":
             value = value.split(b"\x00", 1)[0].decode("ascii")
@@ -194,14 +205,16 @@ class Protocol:
                 raise AssertionError("boolean should be one byte long")
         return value
 
+    @staticmethod
     def set_vlan(vlan_num, member_mask, tagged_mask, vlan_name):
         value = (
-            struct.pack("!hii", vlan_num, member_mask, tagged_mask)
-            + vlan_name.encode("ascii")
-            + b"\x00"
+                struct.pack("!hii", vlan_num, member_mask, tagged_mask)
+                + vlan_name.encode("ascii")
+                + b"\x00"
         )
         return value
 
+    @staticmethod
     def set_pvid(vlan_num, port):
         value = struct.pack("!bh", port, vlan_num)
         return value
