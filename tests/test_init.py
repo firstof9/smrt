@@ -30,33 +30,39 @@ c2MGZiOWYxNzg=
 
 TEST_HOST_MAC = "00:00:00:00:00:00"
 
+
 async def test_discovery():
     """Test switch discovery."""
-    with patch('tplink_ess_lib.network.socket.socket') as mock_socket:
+    with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet = bytes.fromhex(base64.b64decode(SWITCH_DISCOVERY_PACKET_1).decode('utf-8'))
-        mock_socket.recvfrom.side_effect = [(packet, ''), ('', '')]
+        packet = bytes.fromhex(
+            base64.b64decode(SWITCH_DISCOVERY_PACKET_1).decode("utf-8")
+        )
+        mock_socket.recvfrom.side_effect = [(packet, ""), ("", "")]
 
-        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC,user="admin",pwd="admin")
+        tplink = tplink_ess_lib.TpLinkESS(
+            host_mac=TEST_HOST_MAC, user="admin", pwd="admin"
+        )
 
         result = await tplink.discovery()
 
         # Verify timeout called with proper value
         mock_socket.settimeout.assert_called_with(10)
         # Verify socket bound with proper broadcast address
-        mock_socket.bind.assert_called_with((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
+        mock_socket.bind.assert_called_with(
+            (Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT)
+        )
 
         assert result == [
             {
-                'dhcp': False, 
-                'firmware': '1.0.2 Build 20160526 Rel.34684', 
-                'gateway': '0.0.0.0',
-                'hardware': 'TL-SG108PE 1.0', 
-                'hostname': 'TL-SG108PE', 
-                'ip_addr': '192.168.1.3', 
-                'ip_mask': '255.255.255.0', 
-                'mac': '18:a6:f7:bc:80:d1', 
-                'type': 'TL-SG108PE', 
+                "dhcp": False,
+                "firmware": "1.0.2 Build 20160526 Rel.34684",
+                "gateway": "0.0.0.0",
+                "hardware": "TL-SG108PE 1.0",
+                "hostname": "TL-SG108PE",
+                "ip_addr": "192.168.1.3",
+                "ip_mask": "255.255.255.0",
+                "mac": "18:a6:f7:bc:80:d1",
+                "type": "TL-SG108PE",
             }
         ]
-

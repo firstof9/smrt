@@ -23,6 +23,7 @@ class MissingMac(Exception):
 
 
 class Network:
+    """Class for network functions."""
 
     BROADCAST_ADDR = "255.255.255.255"
     BROADCAST_MAC = "00:00:00:00:00:00"
@@ -30,6 +31,7 @@ class Network:
     UDP_RECEIVE_FROM_PORT = 29809
 
     def __init__(self, host_mac):
+        """Initialize."""
         if host_mac is None:
             raise MissingMac
 
@@ -38,26 +40,32 @@ class Network:
         self.token_id = None
 
         # Sending socket
-        self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        self.s_socket = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_DGRAM,
+            socket.IPPROTO_UDP,
+        )
+        self.s_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.s_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
         # Receiving socket
-        self.rs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.r_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
-            self.rs.bind((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
+            self.r_socket.bind((Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
         except OSError:
-            self.rs.bind(('', Network.UDP_RECEIVE_FROM_PORT))
+            self.r_socket.bind(("", Network.UDP_RECEIVE_FROM_PORT))
         except Exception as err:
             _LOGGER.error("Problem creating listener: %s", err)
-            raise InterfaceProblem
-        self.rs.settimeout(10)
+            raise err
+        self.r_socket.settimeout(10)
 
     def __enter__(self):
+        """Enter method."""
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        self.rs.close()
+        """Exit method."""
+        self.r_socket.close()
 
     def send(self, switch_mac, op_code, payload):
         """Send a packet to the given switch."""
@@ -78,53 +86,60 @@ class Network:
         packet = Protocol.assemble_packet(header, payload)
         _LOGGER.debug("Sending Packet to %s: %s", switch_mac, packet.hex())
         packet = Protocol.encode(packet)
-        _LOGGER.debug("Sending Header:  " + str(header))
-        _LOGGER.debug("Sending Payload: " + str(payload))
+        _LOGGER.debug("Sending Header: %s", str(header))
+        _LOGGER.debug("Sending Payload: %s", str(payload))
 
         # Send packet
-        self.ss.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
+        self.s_socket.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
 
     def receive(self):
         """Wait for an incoming packet, then return header+payload as a tuple."""
         if data := self.receive_socket():
             data = Protocol.decode(data)
-            _LOGGER.debug("Receive Packet: " + data.hex())
+            _LOGGER.debug("Receive Packet: %s", data.hex())
             header, payload = Protocol.split(data)
             header, payload = Protocol.interpret_header(
                 header
             ), Protocol.interpret_payload(payload)
-            _LOGGER.debug("Received Header:  " + str(header))
-            _LOGGER.debug("Received Payload: " + str(payload))
+            _LOGGER.debug("Received Header: %s", str(header))
+            _LOGGER.debug("Received Payload: %s", str(payload))
             # TODO: check sequence_id
             # TODO: check host_mac
             # TODO: not duplicates?
             # self.header["token_id"] = header["token_id"]
             self.token_id = header["token_id"]
             return header, payload
-        else:
-            raise ConnectionProblem()
+        raise ConnectionProblem()
 
     def receive_socket(self):
+        """Get data from socket."""
         try:
-            data, addr = self.rs.recvfrom(1500)
-        except Exception as err:
+            data, addr = self.r_socket.recvfrom(1500)  # pylint: disable=unused-variable
+        except OSError as err:
             _LOGGER.debug("Error: %s", err)
             return False
         return data
 
     def query(self, switch_mac, op_code, payload):
-        """Send a packet to the given switch, then wait for a response and return header+payload as a tuple."""
+        """
+        Send packet to switch.
+
+        Send a packet to the given switch, then wait for a response and
+        return header+payload as a tuple.
+        """
         self.send(switch_mac, op_code, payload)
         return self.receive()
 
     @staticmethod
     def login_dict(username, password):
+        """Return login dict."""
         return [
             (Protocol.get_id("username"), username.encode("ascii") + b"\x00"),
             (Protocol.get_id("password"), password.encode("ascii") + b"\x00"),
         ]
 
     def login(self, switch_mac, username, password):
+        """Send login credentials to switch."""
         self.query(switch_mac, Protocol.GET, [(Protocol.get_id("get_token_id"), b"")])
         self.query(switch_mac, Protocol.LOGIN, self.login_dict(username, password))
 
