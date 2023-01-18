@@ -27,7 +27,6 @@ RiZDgzOWY5YWJjOGU3ZGNlNmJhMjE5N2JiOWYzOTFkZjI5ZTJlNGY5YzQ4MDg1MDk1ZWUzYTdjMzFh
 YThkZjkwZjJiMjcwYjdkNmMyZmQzYWU0Zjg4OTVmMzE2ZTg3NmM4YWY2YWYyYWU4OWJhM2U2ZGRjZj
 c2MGZiOWYxNzg=
 """
-
 TEST_HOST_MAC = "00:00:00:00:00:00"
 
 
@@ -40,9 +39,7 @@ async def test_discovery():
         )
         mock_socket.recvfrom.side_effect = [(packet, ""), ("", "")]
 
-        tplink = tplink_ess_lib.TpLinkESS(
-            host_mac=TEST_HOST_MAC, user="admin", pwd="admin"
-        )
+        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
 
         result = await tplink.discovery()
 
