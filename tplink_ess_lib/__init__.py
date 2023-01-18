@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any, Dict
 
 from .network import ConnectionProblem, MissingMac, Network
 from .protocol import Protocol
@@ -50,7 +51,7 @@ class TpLinkESS:
         self._user = user
         self._pwd = pwd
         self._host_mac = host_mac
-        self._data = {}
+        self._data: Dict[Any, Any] = {}
 
     async def discovery(self) -> list[dict]:
         """Return a list of switches found by discovery."""
@@ -103,7 +104,7 @@ class TpLinkESS:
         # all payloads are list of tuple:3. if the third value is a
         # tuple/list, it can be field-mapped
         _LOGGER.debug("Payload in: %s", payload)
-        output = {}
+        output: Dict[str, Any] = {}
         for type_id, type_name, data in payload:  # pylint: disable=unused-variable
             if type(data) in [tuple, list]:
                 if fields := TpLinkESS.RESULT_TYPE_FIELDS.get(type_name):
