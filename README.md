@@ -3,7 +3,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/firstof9/tplink-ess-lib?style=flat-square)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/firstof9/tplink-ess-lib?style=flat-square)
 # tplink-ess-lib
-Python Library for interfacing with TP-Link Easy Smart Switchs
+Python Library for interfacing with TP-Link Easy Smart Switches
 
 
 TODO:
