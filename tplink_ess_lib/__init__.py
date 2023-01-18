@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 
-from .network import Network, ConnectionProblem, MissingMac
+from .network import ConnectionProblem, MissingMac, Network
 from .protocol import Protocol
 
 _LOGGER = logging.getLogger(__name__)
@@ -13,24 +13,32 @@ class TpLinkESS:
     """Represent a TP-Link ESS switch."""
 
     RESULT_FIELD_LOOKUP = {
-        'Status': {
-            0: 'Enabled',
-            1: 'Disabled',
+        "Status": {
+            0: "Enabled",
+            1: "Disabled",
         },
-        'Link Status': {
-            0: 'Link Down',
-            1: 'AUTO',
-            2: 'MH10',
-            3: 'MF10',
-            4: 'MH100',
-            5: '100Full',
-            6: '1000Full',
-        }
+        "Link Status": {
+            0: "Link Down",
+            1: "AUTO",
+            2: "MH10",
+            3: "MF10",
+            4: "MH100",
+            5: "100Full",
+            6: "1000Full",
+        },
     }
 
     RESULT_TYPE_FIELDS = {
-        'stats': ('Port', 'Status', 'Link Status', 'TxGoodPkt', 'TxBadPkt', 'RxGoodPkt', 'RxBadPkt'),
-        'vlan': ('VLAN ID', 'Member Ports', 'Tagged Ports', 'VLAN Name'),
+        "stats": (
+            "Port",
+            "Status",
+            "Link Status",
+            "TxGoodPkt",
+            "TxBadPkt",
+            "RxGoodPkt",
+            "RxBadPkt",
+        ),
+        "vlan": ("VLAN ID", "Member Ports", "Tagged Ports", "VLAN Name"),
     }
 
     def __init__(self, host_mac: str = "", user: str = "", pwd: str = "") -> None:
@@ -51,31 +59,40 @@ class TpLinkESS:
             net.send(Network.BROADCAST_MAC, Protocol.DISCOVERY, {})
             while True:
                 try:
-                    header, payload = net.receive()
+                    header, payload = net.receive()  # pylint: disable=unused-variable
                     switches.append(self.parse_response(payload))
                 except ConnectionProblem:
                     break
         return switches
 
     async def query(self, switch_mac: str, action: str) -> dict:
-        """Send a query to a specific switch and return the results as a dict."""
+        """
+        Send a query.
+
+        Sends a query to a specific switch and return the results
+        as a dict.
+        """
         with Network(host_mac=self._host_mac) as net:
-            header, payload = net.query(switch_mac, Protocol.GET, [(Protocol.tp_ids[action], b'')])
+            header, payload = net.query(  # pylint: disable=unused-variable
+                switch_mac, Protocol.GET, [(Protocol.tp_ids[action], b"")]
+            )
             return self.parse_response(payload)
 
     async def update_data(self, switch_mac) -> dict:
         """Refresh switch data."""
         try:
             net = Network(self._host_mac)
-        except MissingMac as e:
-            _LOGGER.error("Problems with network interface: %s", e)
-            raise MissingMac
+        except MissingMac as err:
+            _LOGGER.error("Problems with network interface: %s", err)
+            raise err
         # Login to switch
         net.login(switch_mac, self._user, self._pwd)
         actions = Protocol.tp_ids
 
         for action in actions:
-            header, payload = net.query(switch_mac, Protocol.GET, [(actions[action], b"")])
+            header, payload = net.query(  # pylint: disable=unused-variable
+                switch_mac, Protocol.GET, [(actions[action], b"")]
+            )
             self._data[action] = self.parse_response(payload)
 
         return self._data
@@ -83,14 +100,16 @@ class TpLinkESS:
     @staticmethod
     def parse_response(payload) -> dict:
         """Parse the payload into a dict."""
-        # all payloads are list of tuple:3. if the third value is a tuple/list, it can be field-mapped
+        # all payloads are list of tuple:3. if the third value is a
+        # tuple/list, it can be field-mapped
         _LOGGER.debug("Payload in: %s", payload)
         output = {}
-        for type_id, type_name, data in payload:
+        for type_id, type_name, data in payload:  # pylint: disable=unused-variable
             if type(data) in [tuple, list]:
                 if fields := TpLinkESS.RESULT_TYPE_FIELDS.get(type_name):
                     mapped_data = {}
-                    for k, v in zip(fields, data):
+                    for k, v in zip(fields, data):  # pylint: disable=invalid-name
+                        # pylint: disable-next=invalid-name
                         if mv := TpLinkESS.RESULT_FIELD_LOOKUP.get(k):
                             mapped_data[k] = mv.get(v)
                             mapped_data[k + " Raw"] = v

@@ -11,6 +11,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Protocol:
+    """Class to handle TpLink ESS messages."""
+
     PACKET_END = b"\xff\xff\x00\x00"
 
     KEY_BASE64 = """
@@ -103,6 +105,7 @@ class Protocol:
 
     @staticmethod
     def get_sequence_kind(sequence):
+        """Get sequence of packet type."""
         for key, value in Protocol.sequences.items():
             if value == sequence:
                 return key
@@ -110,14 +113,16 @@ class Protocol:
 
     @staticmethod
     def get_id(name):
+        """Return id from name."""
         return Protocol.tp_ids[name]
 
     @staticmethod
     def decode(data):
+        """Decode switch packet."""
         data = bytearray(data)
-        s = bytearray(Protocol.KEY)
+        s = bytearray(Protocol.KEY)  # pylint: disable=invalid-name
         j = 0
-        for k in range(len(data)):
+        for k in range(len(data)):  # pylint: disable=consider-using-enumerate
             i = (k + 1) & 255
             j = (j + s[i]) & 255
             s[i], s[j] = s[j], s[i]
@@ -128,24 +133,27 @@ class Protocol:
 
     @staticmethod
     def split(data):
+        """Split the packet apart."""
         if len(data) < Protocol.header["len"] + len(Protocol.PACKET_END):
             raise AssertionError("invalid data length")
         if not data.endswith(Protocol.PACKET_END):
             raise AssertionError("data without packet end")
-        return data[0: Protocol.header["len"]], data[Protocol.header["len"]:]
+        return data[0 : Protocol.header["len"]], data[Protocol.header["len"] :]
 
     @staticmethod
     def interpret_header(header):
+        """Decode the packet header."""
         names = Protocol.header["blank"].keys()
         vals = struct.unpack(Protocol.header["fmt"], header)
         return dict(zip(names, vals))
 
     @staticmethod
     def interpret_payload(payload):
+        """Decode the packet payload."""
         results = []
         while len(payload) > len(Protocol.PACKET_END):
             dtype, dlen = struct.unpack("!hh", payload[0:4])
-            data = payload[4: 4 + dlen]
+            data = payload[4 : 4 + dlen]
             results.append(
                 (
                     dtype,
@@ -153,33 +161,38 @@ class Protocol:
                     Protocol.interpret_value(data, Protocol.ids_tp[dtype][0]),
                 )
             )
-            payload = payload[4 + dlen:]
+            payload = payload[4 + dlen :]
         return results
 
     @staticmethod
     def analyze(data):
+        """Split header and payload from packet."""
         header, payload = Protocol.split(data)
-        return Protocol.interpret_header(header), Protocol.interpret_payload(payload)
+        header = Protocol.interpret_header(header)
+        payload = Protocol.interpret_payload(payload)
+        return header, payload
 
     @staticmethod
     def assemble_packet(header, payload):
+        """Build packet from header and payload."""
         payload_bytes = b""
         for dtype, value in payload:
             payload_bytes += struct.pack("!hh", dtype, len(value))
             payload_bytes += value
         header["check_length"] = (
-                Protocol.header["len"] + len(payload_bytes) + len(Protocol.PACKET_END)
+            Protocol.header["len"] + len(payload_bytes) + len(Protocol.PACKET_END)
         )
-        header = tuple(header[part] for part in Protocol.header["blank"].keys())
+        header = tuple(header[part] for part in Protocol.header["blank"])
         header_bytes = struct.pack(Protocol.header["fmt"], *header)
         return header_bytes + payload_bytes + Protocol.PACKET_END
 
     @staticmethod
     def interpret_value(value, kind):
+        """Decode payload values."""
         if kind == "str":
             value = value.split(b"\x00", 1)[0].decode("ascii")
         elif kind == "ip":
-            value = ip_address(value)
+            value = f"{ip_address(value):s}"
         elif kind == "hex":
             value = mac_to_str(value)
         elif kind == "action":
@@ -207,14 +220,16 @@ class Protocol:
 
     @staticmethod
     def set_vlan(vlan_num, member_mask, tagged_mask, vlan_name):
+        """Set vlan entry."""
         value = (
-                struct.pack("!hii", vlan_num, member_mask, tagged_mask)
-                + vlan_name.encode("ascii")
-                + b"\x00"
+            struct.pack("!hii", vlan_num, member_mask, tagged_mask)
+            + vlan_name.encode("ascii")
+            + b"\x00"
         )
         return value
 
     @staticmethod
     def set_pvid(vlan_num, port):
+        """Set port primary vlan ID."""
         value = struct.pack("!bh", port, vlan_num)
         return value

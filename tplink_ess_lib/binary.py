@@ -4,28 +4,31 @@ SEP = ","
 
 
 def ports2list(ports):
+    """Convert ports to a list."""
     if ports is None:
-        l = []
+        port_list = []
     else:
         try:
-            l = [int(x) for x in ports.split(SEP)]
+            port_list = [int(x) for x in ports.split(SEP)]
         except ValueError:
-            l = []
-    return l
+            port_list = []
+    return port_list
 
 
 def ports2byte(ports):
+    """Convert ports to bytes."""
     out = 0
-    l = ports2list(ports)
-    if l == []:
+    port_list = ports2list(ports)
+    if port_list == []:
         out = 0
     else:
-        for i in l:
+        for i in port_list:
             out |= 1 << (int(i) - 1)
     return out
 
 
 def byte2ports(byte):
+    """Convert bytes to ports."""
     out = []
     for i in range(32):
         if byte % 2:
@@ -35,16 +38,10 @@ def byte2ports(byte):
 
 
 def mac_to_bytes(mac):
+    """Convert mac address to bytes."""
     return bytes(int(byte, 16) for byte in mac.split(":"))
 
 
 def mac_to_str(mac):
+    """Convert mac bytes to a string."""
     return ":".join(format(s, "02x") for s in mac)
-
-
-if __name__ == "__main__":
-    a = ports2byte("1,2,5,6,8,12,15")
-    print(a, byte2ports(a))
-    print(ports2list("1,2"))
-    m = mac_to_bytes("ba:ff:ee:ff:ac:ee")
-    print(mac_to_str(m))
