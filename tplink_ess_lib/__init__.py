@@ -53,14 +53,16 @@ class TpLinkESS:
         self._host_mac = host_mac
         self._data: Dict[Any, Any] = {}
 
-    async def discovery(self) -> list[dict]:
+    async def discovery(self, testing: bool = False) -> list[dict]:
         """Return a list of unique switches found by discovery."""
         switches = {}
         with Network(self._host_mac) as net:
             net.send(Network.BROADCAST_MAC, Protocol.DISCOVERY, {})
             while True:
                 try:
-                    header, payload = net.receive()  # pylint: disable=unused-variable
+                    header, payload = net.receive(
+                        testing
+                    )  # pylint: disable=unused-variable
                     switches[header["switch_mac"]] = self.parse_response(payload)
                 except ConnectionProblem:
                     break

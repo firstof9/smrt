@@ -92,7 +92,7 @@ class Network:
         # Send packet
         self.s_socket.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
 
-    def receive(self):
+    def receive(self, testing: bool = False):
         """Wait for an incoming packet, then return header+payload as a tuple."""
         while data := self.receive_socket():
             data = Protocol.decode(data)
@@ -104,15 +104,19 @@ class Network:
             _LOGGER.debug("Received Header: %s", str(header))
             _LOGGER.debug("Received Payload: %s", str(payload))
             # check sequence_id alignment
-            if self.sequence_id != header["sequence_id"]:
-                _LOGGER.warning("##### Ignoring sequence_id %d expected %d",
-                                header["sequence_id"], self.sequence_id)
+            if self.sequence_id != header["sequence_id"] and not testing:
+                _LOGGER.warning(
+                    "##### Ignoring sequence_id %d expected %d",
+                    header["sequence_id"],
+                    self.sequence_id,
+                )
                 continue
             # check host_mac alignment
-            data_mac = mac_to_str(header['host_mac'])
-            if self.host_mac != data_mac:
-                _LOGGER.warning("##### Ignoring host-mac %s expected %s",
-                                data_mac, self.host_mac)
+            data_mac = mac_to_str(header["host_mac"])
+            if self.host_mac != data_mac and not testing:
+                _LOGGER.warning(
+                    "##### Ignoring host-mac %s expected %s", data_mac, self.host_mac
+                )
                 continue
             self.token_id = header["token_id"]
             return header, payload
