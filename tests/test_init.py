@@ -50,8 +50,7 @@ async def test_discovery():
             (Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT)
         )
 
-        assert result == [
-            {
+        assert result == {
                 "dhcp": False,
                 "firmware": "1.0.2 Build 20160526 Rel.34684",
                 "gateway": "0.0.0.0",
@@ -61,5 +60,4 @@ async def test_discovery():
                 "ip_mask": "255.255.255.0",
                 "mac": "18:a6:f7:bc:80:d1",
                 "type": "TL-SG108PE",
-            }
-        ]
+        }
