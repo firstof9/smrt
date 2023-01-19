@@ -105,12 +105,14 @@ class Network:
             _LOGGER.debug("Received Payload: %s", str(payload))
             # check sequence_id alignment
             if self.sequence_id != header["sequence_id"]:
-                _LOGGER.warning("##### Ignoring sequence_id %d expected %d", header["sequence_id"], self.sequence_id)
+                _LOGGER.warning("##### Ignoring sequence_id %d expected %d",
+                                header["sequence_id"], self.sequence_id)
                 continue
             # check host_mac alignment
             data_mac = mac_to_str(header['host_mac'])
             if self.host_mac != data_mac:
-                _LOGGER.warning("##### Ignoring mac id %d expected %d", data_mac, self.host_mac)
+                _LOGGER.warning("##### Ignoring mac id %d expected %d",
+                                data_mac, self.host_mac)
                 continue
             self.token_id = header["token_id"]
             return header, payload
