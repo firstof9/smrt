@@ -111,7 +111,7 @@ class Network:
             # check host_mac alignment
             data_mac = mac_to_str(header['host_mac'])
             if self.host_mac != data_mac:
-                _LOGGER.warning("##### Ignoring mac id %d expected %d",
+                _LOGGER.warning("##### Ignoring host-mac %s expected %s",
                                 data_mac, self.host_mac)
                 continue
             self.token_id = header["token_id"]
