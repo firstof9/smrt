@@ -60,9 +60,7 @@ class TpLinkESS:
             net.send(Network.BROADCAST_MAC, Protocol.DISCOVERY, {})
             while True:
                 try:
-                    header, payload = net.receive(
-                        testing
-                    )  # pylint: disable=unused-variable
+                    header, payload = net.receive(testing)
                     switches[header["switch_mac"]] = self.parse_response(payload)
                 except ConnectionProblem:
                     break
