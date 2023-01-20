@@ -1,5 +1,7 @@
 """Binary helper for tplink_ess_lib."""
 
+SEP = ","
+
 
 def byte2ports(byte):
     """Convert bytes to ports."""
