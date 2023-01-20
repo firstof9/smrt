@@ -4,7 +4,7 @@ import logging
 import random
 import socket
 
-from .binary import mac_to_bytes
+from .binary import mac_to_bytes, mac_to_str
 from .protocol import Protocol
 
 _LOGGER = logging.getLogger(__name__)
@@ -92,9 +92,9 @@ class Network:
         # Send packet
         self.s_socket.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
 
-    def receive(self):
+    def receive(self, testing: bool = False):
         """Wait for an incoming packet, then return header+payload as a tuple."""
-        if data := self.receive_socket():
+        while data := self.receive_socket():
             data = Protocol.decode(data)
             _LOGGER.debug("Receive Packet: %s", data.hex())
             header, payload = Protocol.split(data)
@@ -103,10 +103,21 @@ class Network:
             ), Protocol.interpret_payload(payload)
             _LOGGER.debug("Received Header: %s", str(header))
             _LOGGER.debug("Received Payload: %s", str(payload))
-            # TODO: check sequence_id
-            # TODO: check host_mac
-            # TODO: not duplicates?
-            # self.header["token_id"] = header["token_id"]
+            # check sequence_id alignment
+            if self.sequence_id != header["sequence_id"] and not testing:
+                _LOGGER.warning(
+                    "##### Ignoring sequence_id %d expected %d",
+                    header["sequence_id"],
+                    self.sequence_id,
+                )
+                continue
+            # check host_mac alignment
+            data_mac = mac_to_str(header["host_mac"])
+            if self.host_mac != data_mac and not testing:
+                _LOGGER.warning(
+                    "##### Ignoring host-mac %s expected %s", data_mac, self.host_mac
+                )
+                continue
             self.token_id = header["token_id"]
             return header, payload
         raise ConnectionProblem()

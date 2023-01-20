@@ -41,7 +41,7 @@ async def test_discovery():
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
 
-        result = await tplink.discovery()
+        result = await tplink.discovery(testing=True)
 
         # Verify timeout called with proper value
         mock_socket.settimeout.assert_called_with(10)
