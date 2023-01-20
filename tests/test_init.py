@@ -7,8 +7,8 @@ from unittest.mock import patch
 import pytest
 
 import tplink_ess_lib
-from tplink_ess_lib.network import Network, Protocol
 from tplink_ess_lib import MissingMac
+from tplink_ess_lib.network import InterfaceProblem, Network, Protocol
 
 pytestmark = pytest.mark.asyncio
 
@@ -206,4 +206,18 @@ async def test_stats_query():
 async def test_missing_hostmac_exception():
     """Test missing host mac address exception."""
     with pytest.raises(MissingMac):
-        tplink = tplink_ess_lib.TpLinkESS()
+        tplink_ess_lib.TpLinkESS()
+
+
+async def test_binding_exceptions():
+    """Test socket binding exceptions."""
+    with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
+        mock_socket = mock_socket.return_value
+        mock_socket.bind.side_effect = OSError
+        with pytest.raises(OSError):
+            tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+            await tplink.discovery(testing=True)
+        mock_socket.bind.side_effect = InterfaceProblem
+        with pytest.raises(InterfaceProblem):
+            tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+            await tplink.discovery(testing=True)
