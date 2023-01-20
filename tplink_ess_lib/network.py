@@ -32,9 +32,6 @@ class Network:
 
     def __init__(self, host_mac):
         """Initialize."""
-        if host_mac is None:
-            raise MissingMac
-
         self.host_mac = host_mac
         self.sequence_id = random.randint(0, 1000)
         self.token_id = None
@@ -131,7 +128,7 @@ class Network:
             return False
         return data
 
-    def query(self, switch_mac, op_code, payload):
+    def query(self, switch_mac, op_code, payload, testing: bool = False):
         """
         Send packet to switch.
 
@@ -139,7 +136,7 @@ class Network:
         return header+payload as a tuple.
         """
         self.send(switch_mac, op_code, payload)
-        return self.receive()
+        return self.receive(testing)
 
     @staticmethod
     def login_dict(username, password):

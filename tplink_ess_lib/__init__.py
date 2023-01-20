@@ -66,7 +66,7 @@ class TpLinkESS:
                     break
         return list(switches.values())
 
-    async def query(self, switch_mac: str, action: str) -> dict:
+    async def query(self, switch_mac: str, action: str, testing: bool = False) -> dict:
         """
         Send a query.
 
@@ -75,7 +75,10 @@ class TpLinkESS:
         """
         with Network(host_mac=self._host_mac) as net:
             header, payload = net.query(  # pylint: disable=unused-variable
-                switch_mac, Protocol.GET, [(Protocol.tp_ids[action], b"")]
+                switch_mac=switch_mac,
+                op_code=Protocol.GET,
+                payload=[(Protocol.tp_ids[action], b"")],
+                testing=testing,
             )
             return self.parse_response(payload)
 
@@ -83,7 +86,7 @@ class TpLinkESS:
         """Refresh switch data."""
         try:
             net = Network(self._host_mac)
-        except MissingMac as err:
+        except OSError as err:
             _LOGGER.error("Problems with network interface: %s", err)
             raise err
         # Login to switch
@@ -99,7 +102,7 @@ class TpLinkESS:
         return self._data
 
     @staticmethod
-    def parse_response(payload) -> dict:
+    def parse_response(payload) -> Dict[str, Any]:
         """Parse the payload into a dict."""
         # all payloads are list of tuple:3. if the third value is a
         # tuple/list, it can be field-mapped
