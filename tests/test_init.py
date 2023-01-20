@@ -143,57 +143,63 @@ async def test_stats_query():
         )
 
         assert result == {
-            'stats': [{
-                'Port': 1,
-                'Status': 'Disabled',
-                'Status Raw': 1,
-                'Link Status': '1000Full',
-                'Link Status Raw': 6,
-                'TxGoodPkt': 10085762,
-                'TxBadPkt': 0,
-                'RxGoodPkt': 1062303,
-                'RxBadPkt': 0
-            }, {
-                'Port': 2,
-                'Status': 'Disabled',
-                'Status Raw': 1,
-                'Link Status': 'Link Down',
-                'Link Status Raw': 0,
-                'TxGoodPkt': 0,
-                'TxBadPkt': 0,
-                'RxGoodPkt': 0,
-                'RxBadPkt': 0
-            }, {
-                'Port': 3,
-                'Status': 'Disabled',
-                'Status Raw': 1,
-                'Link Status': '1000Full',
-                'Link Status Raw': 6,
-                'TxGoodPkt': 23127099,
-                'TxBadPkt': 0,
-                'RxGoodPkt': 8488829,
-                'RxBadPkt': 0
-            }, {
-                'Port': 4,
-                'Status': 'Disabled',
-                'Status Raw': 1,
-                'Link Status': 'Link Down',
-                'Link Status Raw': 0,
-                'TxGoodPkt': 0,
-                'TxBadPkt': 0,
-                'RxGoodPkt': 0,
-                'RxBadPkt': 0
-            }, {
-                'Port': 5,
-                'Status': 'Disabled',
-                'Status Raw': 1,
-                'Link Status': '1000Full',
-                'Link Status Raw': 6,
-                'TxGoodPkt': 9715369,
-                'TxBadPkt': 0,
-                'RxGoodPkt': 25004812,
-                'RxBadPkt': 25
-            }]
+            "stats": [
+                {
+                    "Port": 1,
+                    "Status": "Disabled",
+                    "Status Raw": 1,
+                    "Link Status": "1000Full",
+                    "Link Status Raw": 6,
+                    "TxGoodPkt": 10085762,
+                    "TxBadPkt": 0,
+                    "RxGoodPkt": 1062303,
+                    "RxBadPkt": 0,
+                },
+                {
+                    "Port": 2,
+                    "Status": "Disabled",
+                    "Status Raw": 1,
+                    "Link Status": "Link Down",
+                    "Link Status Raw": 0,
+                    "TxGoodPkt": 0,
+                    "TxBadPkt": 0,
+                    "RxGoodPkt": 0,
+                    "RxBadPkt": 0,
+                },
+                {
+                    "Port": 3,
+                    "Status": "Disabled",
+                    "Status Raw": 1,
+                    "Link Status": "1000Full",
+                    "Link Status Raw": 6,
+                    "TxGoodPkt": 23127099,
+                    "TxBadPkt": 0,
+                    "RxGoodPkt": 8488829,
+                    "RxBadPkt": 0,
+                },
+                {
+                    "Port": 4,
+                    "Status": "Disabled",
+                    "Status Raw": 1,
+                    "Link Status": "Link Down",
+                    "Link Status Raw": 0,
+                    "TxGoodPkt": 0,
+                    "TxBadPkt": 0,
+                    "RxGoodPkt": 0,
+                    "RxBadPkt": 0,
+                },
+                {
+                    "Port": 5,
+                    "Status": "Disabled",
+                    "Status Raw": 1,
+                    "Link Status": "1000Full",
+                    "Link Status Raw": 6,
+                    "TxGoodPkt": 9715369,
+                    "TxBadPkt": 0,
+                    "RxGoodPkt": 25004812,
+                    "RxBadPkt": 25,
+                },
+            ]
         }
 
 
