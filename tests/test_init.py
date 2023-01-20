@@ -8,7 +8,7 @@ import pytest
 
 import tplink_ess_lib
 from tplink_ess_lib import MissingMac
-from tplink_ess_lib.network import InterfaceProblem, Network, Protocol
+from tplink_ess_lib.network import InterfaceProblem, Network
 
 pytestmark = pytest.mark.asyncio
 
