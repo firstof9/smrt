@@ -7,35 +7,12 @@ from unittest.mock import patch
 import pytest
 
 import tplink_ess_lib
-from tplink_ess_lib.network import Network, Protocol
 from tplink_ess_lib import MissingMac
+from tplink_ess_lib.network import InterfaceProblem, Network
+from .common import TEST_PACKETS
 
 pytestmark = pytest.mark.asyncio
 
-SWITCH_DISCOVERY_PACKET_1 = """
-NWQ3NjcyYTI4YTAyMzA2M2ZiNjcyZjA3YmM3MDdkYzY0MjJiYTJmNWQ3MzBhZWVkNTA4ZjA1YTJjMj
-AyOTA5YTViMTI4MWNkNzM2NjA2NjUwZWU4NzA4ZmY0MDU2OTI0NWI3MTQ3N2UzMzYzYzgzMDA5MjQ0
-ZTU4MzZlMWYyOTg1NDI4ZTUxYTRjNTllODYyOGMyMjRjMWYxNjBmMWE5ZTk4YTZhZWQxYjc3ZTk1ZT
-BiNGIzYWVhYzhjYmJjZTdmMzZmMDdjMTc5NzgwYTVlOTAyZDJlNWY5Y2M4MDhhNWQxMmNlZjQ4NDJi
-OThlN2MwYjc5MjQxOTlhNmMyZmQyMGUxZjg4ZjVmYTE1MDJhYWMyMmY3YWMyYjkwMTBhYjE5MjIzMD
-ZmZjA0MGYxN2M3Y2I2NzBiNzA4OTIwNmEy
-"""
-SWITCH_DISCOVERY_PACKET_2 = """
-NWQ3NjFhNGIyYTM3ZDFkOGZiNjcyZjA3YmM3MDdkYzY0MjJiYTJmNWQ3MzVhZWVkNTA4ZjA1YTJjMj
-AyOTA5YTViMTI4MWNjNzM2NjA2NjUwZWU4NzA4MmUxNDA2OTI2NTk3OTNmNWQxNjNhZjgxZjBmMTQ3
-NjBiNzNlNzgyZDQwM2E3OWNkNmJiZTI2OGFjYmQwYjdjMmUxNzAxNjhjNWMzZWE4ODg0ZWMyMmMwZj
-ZiNmI0YWVhZjljZGM5OTI1Mzg5MTIxNGQ4OTg2OTFkZjMyZTZlYmFkODhhZGQ2NGU2ZmQzOTI4NjNh
-OWJmMWEwZjJiMjc5Yjc5N2MyZmQyZGUxZmQ0ZmY3YTQzZDJlNjk4YWYyNTBkNDZhMTBhZmUwZGRjYm
-FmNTg0N2Y1ODc4M2I2NzA=
-"""
-SWITCH_STATS_PACKET = """
-NWQ3NjFhNGIyYTM3ZDFkOGU3NzAwYjI2ODUzMTdlNWM0MjJiYTJmNWQ3MzhhZWVkNTA4ZjAyYThjMj
-AyOTA5YTFiMTM4MWQ1MjYyYjJkMzZkMDNjYzJiN2E0NDA2OTI0NDk0NGQzMmE3ZjRlOWIzNzM4MTQ2
-NTBhNzJlMWYyOWI1NDJlZmRiY2JiZTU2OGIzOGMyNTRjMDAyNzIxNmFiMGFhOTVlZmE1ZDgxMzkxMj
-RiZDgzOWY5YWJjOGU3ZGNlNmJhMjE5N2JiOWYzOTFkZjI5ZTJlNGY5YzQ4MDg1MDk1ZWUzYTdjMzFh
-YThkZjkwZjJiMjcwYjdkNmMyZmQzYWU0Zjg4OTVmMzE2ZTg3NmM4YWY2YWYyYWU4OWJhM2U2ZGRjZj
-c2MGZiOWYxNzg=
-"""
 TEST_HOST_MAC = "00:00:00:00:00:00"
 TEST_SWITCH_MAC = "70:4f:57:89:61:6a"
 
@@ -44,9 +21,7 @@ async def test_discovery():
     """Test switch discovery."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet = bytes.fromhex(
-            base64.b64decode(SWITCH_DISCOVERY_PACKET_1).decode("utf-8")
-        )
+        packet = bytes.fromhex(base64.b64decode(TEST_PACKETS[0]).decode("utf-8"))
         mock_socket.recvfrom.side_effect = [(packet, ""), ("", "")]
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
@@ -79,12 +54,8 @@ async def test_discovery_multi():
     """Test switch discovery with multple switches."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet1 = bytes.fromhex(
-            base64.b64decode(SWITCH_DISCOVERY_PACKET_1).decode("utf-8")
-        )
-        packet2 = bytes.fromhex(
-            base64.b64decode(SWITCH_DISCOVERY_PACKET_2).decode("utf-8")
-        )
+        packet1 = bytes.fromhex(base64.b64decode(TEST_PACKETS[0]).decode("utf-8"))
+        packet2 = bytes.fromhex(base64.b64decode(TEST_PACKETS[1]).decode("utf-8"))
         mock_socket.recvfrom.side_effect = [(packet1, ""), (packet2, ""), ("", "")]
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
@@ -128,7 +99,7 @@ async def test_stats_query():
     """Test stats query."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet = bytes.fromhex(base64.b64decode(SWITCH_STATS_PACKET).decode("utf-8"))
+        packet = bytes.fromhex(base64.b64decode(TEST_PACKETS[2]).decode("utf-8"))
         mock_socket.recvfrom.side_effect = [(packet, ""), ("", "")]
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
@@ -203,7 +174,151 @@ async def test_stats_query():
         }
 
 
+async def test_update_data():
+    """Test update data function."""
+    with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
+        mock_socket = mock_socket.return_value
+        packet1 = bytes.fromhex(base64.b64decode(TEST_PACKETS[6]).decode("utf-8"))
+        packet2 = bytes.fromhex(base64.b64decode(TEST_PACKETS[7]).decode("utf-8"))
+        packet3 = bytes.fromhex(base64.b64decode(TEST_PACKETS[2]).decode("utf-8"))
+        packet4 = bytes.fromhex(base64.b64decode(TEST_PACKETS[3]).decode("utf-8"))
+        packet5 = bytes.fromhex(base64.b64decode(TEST_PACKETS[4]).decode("utf-8"))
+        packet6 = bytes.fromhex(base64.b64decode(TEST_PACKETS[5]).decode("utf-8"))
+        mock_socket.recvfrom.side_effect = [
+            (packet1, ""),
+            (packet2, ""),
+            (packet3, ""),
+            (packet1, ""),
+            (packet2, ""),
+            (packet4, ""),
+            (packet1, ""),
+            (packet2, ""),
+            (packet5, ""),
+            (packet1, ""),
+            (packet2, ""),
+            (packet6, ""),
+            ("", ""),
+        ]
+
+        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+
+        result = await tplink.update_data(switch_mac=TEST_SWITCH_MAC, testing=True)
+
+        # Verify timeout called with proper value
+        mock_socket.settimeout.assert_called_with(10)
+        # Verify socket bound with proper broadcast address
+        mock_socket.bind.assert_called_with(
+            (Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT)
+        )
+
+        assert result == {
+            "type": {
+                "stats": [
+                    {
+                        "Port": 1,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "1000Full",
+                        "Link Status Raw": 6,
+                        "TxGoodPkt": 10085762,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 1062303,
+                        "RxBadPkt": 0,
+                    },
+                    {
+                        "Port": 2,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "Link Down",
+                        "Link Status Raw": 0,
+                        "TxGoodPkt": 0,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 0,
+                        "RxBadPkt": 0,
+                    },
+                    {
+                        "Port": 3,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "1000Full",
+                        "Link Status Raw": 6,
+                        "TxGoodPkt": 23127099,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 8488829,
+                        "RxBadPkt": 0,
+                    },
+                    {
+                        "Port": 4,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "Link Down",
+                        "Link Status Raw": 0,
+                        "TxGoodPkt": 0,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 0,
+                        "RxBadPkt": 0,
+                    },
+                    {
+                        "Port": 5,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "1000Full",
+                        "Link Status Raw": 6,
+                        "TxGoodPkt": 9715369,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 25004812,
+                        "RxBadPkt": 25,
+                    },
+                ]
+            },
+            "hostname": {},
+            "mac": {},
+            "ip_addr": {
+                "vlan_enabled": "01",
+                "vlan": [
+                    {
+                        "VLAN ID": 1,
+                        "Member Ports": "1,2,3,4,5",
+                        "Tagged Ports": "",
+                        "VLAN Name": "Default_VLAN",
+                    },
+                    {
+                        "VLAN ID": 50,
+                        "Member Ports": "1,5",
+                        "Tagged Ports": "",
+                        "VLAN Name": "GAMING",
+                    },
+                ],
+                "vlan_filler": " ",
+            },
+            "ip_mask": {},
+            "gateway": {},
+            "firmware": {"ports": "05:01:00:01:06:00:00"},
+            "hardware": {},
+            "dhcp": {},
+            "num_ports": {"trunk": "01:00:00:00:00"},
+        }
+
+
 async def test_missing_hostmac_exception():
     """Test missing host mac address exception."""
     with pytest.raises(MissingMac):
-        tplink = tplink_ess_lib.TpLinkESS()
+        tplink_ess_lib.TpLinkESS()
+
+
+async def test_binding_exceptions():
+    """Test socket binding exceptions."""
+    with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
+        mock_socket = mock_socket.return_value
+        mock_socket.bind.side_effect = OSError
+        with pytest.raises(OSError):
+            tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+            await tplink.discovery(testing=True)
+        mock_socket.bind.side_effect = InterfaceProblem
+        with pytest.raises(InterfaceProblem):
+            tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+            await tplink.discovery(testing=True)
+        mock_socket.bind.side_effect = InterfaceProblem
+        with pytest.raises(InterfaceProblem):
+            tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+            await tplink.update_data(switch_mac=TEST_SWITCH_MAC)

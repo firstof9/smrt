@@ -3,30 +3,6 @@
 SEP = ","
 
 
-def ports2list(ports):
-    """Convert ports to a list."""
-    if ports is None:
-        port_list = []
-    else:
-        try:
-            port_list = [int(x) for x in ports.split(SEP)]
-        except ValueError:
-            port_list = []
-    return port_list
-
-
-def ports2byte(ports):
-    """Convert ports to bytes."""
-    out = 0
-    port_list = ports2list(ports)
-    if port_list == []:
-        out = 0
-    else:
-        for i in port_list:
-            out |= 1 << (int(i) - 1)
-    return out
-
-
 def byte2ports(byte):
     """Convert bytes to ports."""
     out = []

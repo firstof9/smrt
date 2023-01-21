@@ -82,22 +82,28 @@ class TpLinkESS:
             )
             return self.parse_response(payload)
 
-    async def update_data(self, switch_mac) -> dict:
+    async def update_data(self, switch_mac, testing: bool = False) -> dict:
         """Refresh switch data."""
         try:
-            net = Network(self._host_mac)
+            net = Network(host_mac=self._host_mac)
         except OSError as err:
             _LOGGER.error("Problems with network interface: %s", err)
             raise err
         # Login to switch
-        net.login(switch_mac, self._user, self._pwd)
+        net.login(switch_mac, self._user, self._pwd, testing)
         actions = Protocol.tp_ids
 
         for action in actions:
-            header, payload = net.query(  # pylint: disable=unused-variable
-                switch_mac, Protocol.GET, [(actions[action], b"")]
-            )
-            self._data[action] = self.parse_response(payload)
+            try:
+                header, payload = net.query(  # pylint: disable=unused-variable
+                    switch_mac=switch_mac,
+                    op_code=Protocol.GET,
+                    payload=[(Protocol.tp_ids[action], b"")],
+                    testing=testing,
+                )
+                self._data[action] = self.parse_response(payload)
+            except ConnectionProblem:
+                break
 
         return self._data
 
