@@ -8,7 +8,7 @@ import pytest
 
 import tplink_ess_lib
 from tplink_ess_lib import MissingMac
-from tplink_ess_lib.network import InterfaceProblem, Network
+from tplink_ess_lib.network import InterfaceProblem, Network, ConnectionProblem
 from .common import TEST_PACKETS
 
 pytestmark = pytest.mark.asyncio
@@ -298,6 +298,11 @@ async def test_update_data():
             "dhcp": {},
             "num_ports": {"trunk": "01:00:00:00:00"},
         }
+
+        # Test recvfrom socket error
+        mock_socket.recvfrom.side_effect = OSError
+        with pytest.raises(ConnectionProblem):
+            result = await tplink.update_data(switch_mac=TEST_SWITCH_MAC, testing=True)
 
 
 async def test_missing_hostmac_exception():

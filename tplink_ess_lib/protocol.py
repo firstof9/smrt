@@ -104,14 +104,6 @@ class Protocol:
     tp_ids = {v[1]: k for k, v in ids_tp.items()}
 
     @staticmethod
-    def get_sequence_kind(sequence):
-        """Get sequence of packet type."""
-        for key, value in Protocol.sequences.items():
-            if value == sequence:
-                return key
-        return "unknown"
-
-    @staticmethod
     def get_id(name):
         """Return id from name."""
         return Protocol.tp_ids[name]
@@ -163,14 +155,6 @@ class Protocol:
             )
             payload = payload[4 + dlen :]
         return results
-
-    @staticmethod
-    def analyze(data):
-        """Split header and payload from packet."""
-        header, payload = Protocol.split(data)
-        header = Protocol.interpret_header(header)
-        payload = Protocol.interpret_payload(payload)
-        return header, payload
 
     @staticmethod
     def assemble_packet(header, payload):
