@@ -146,10 +146,16 @@ class Network:
             (Protocol.get_id("password"), password.encode("ascii") + b"\x00"),
         ]
 
-    def login(self, switch_mac: str, username: str, password: str, testing: bool = False):
+    def login(
+        self, switch_mac: str, username: str, password: str, testing: bool = False
+    ):
         """Send login credentials to switch."""
-        self.query(switch_mac, Protocol.GET, [(Protocol.get_id("get_token_id"), b"")], testing)
-        self.query(switch_mac, Protocol.LOGIN, self.login_dict(username, password), testing)
+        self.query(
+            switch_mac, Protocol.GET, [(Protocol.get_id("get_token_id"), b"")], testing
+        )
+        self.query(
+            switch_mac, Protocol.LOGIN, self.login_dict(username, password), testing
+        )
 
     def set(self, switch_mac, username, password, payload):
         """Authenticate to the switch."""

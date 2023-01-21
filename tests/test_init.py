@@ -189,13 +189,13 @@ async def test_update_data():
             (packet2, ""),
             (packet3, ""),
             (packet1, ""),
-            (packet2, ""),            
+            (packet2, ""),
             (packet4, ""),
             (packet1, ""),
-            (packet2, ""),            
+            (packet2, ""),
             (packet5, ""),
             (packet1, ""),
-            (packet2, ""),            
+            (packet2, ""),
             (packet6, ""),
             ("", ""),
         ]
@@ -212,86 +212,91 @@ async def test_update_data():
         )
 
         assert result == {
-            'type': {
-                'stats': [{
-                    'Port': 1,
-                    'Status': 'Disabled',
-                    'Status Raw': 1,
-                    'Link Status': '1000Full',
-                    'Link Status Raw': 6,
-                    'TxGoodPkt': 10085762,
-                    'TxBadPkt': 0,
-                    'RxGoodPkt': 1062303,
-                    'RxBadPkt': 0
-                }, {
-                    'Port': 2,
-                    'Status': 'Disabled',
-                    'Status Raw': 1,
-                    'Link Status': 'Link Down',
-                    'Link Status Raw': 0,
-                    'TxGoodPkt': 0,
-                    'TxBadPkt': 0,
-                    'RxGoodPkt': 0,
-                    'RxBadPkt': 0
-                }, {
-                    'Port': 3,
-                    'Status': 'Disabled',
-                    'Status Raw': 1,
-                    'Link Status': '1000Full',
-                    'Link Status Raw': 6,
-                    'TxGoodPkt': 23127099,
-                    'TxBadPkt': 0,
-                    'RxGoodPkt': 8488829,
-                    'RxBadPkt': 0
-                }, {
-                    'Port': 4,
-                    'Status': 'Disabled',
-                    'Status Raw': 1,
-                    'Link Status': 'Link Down',
-                    'Link Status Raw': 0,
-                    'TxGoodPkt': 0,
-                    'TxBadPkt': 0,
-                    'RxGoodPkt': 0,
-                    'RxBadPkt': 0
-                }, {
-                    'Port': 5,
-                    'Status': 'Disabled',
-                    'Status Raw': 1,
-                    'Link Status': '1000Full',
-                    'Link Status Raw': 6,
-                    'TxGoodPkt': 9715369,
-                    'TxBadPkt': 0,
-                    'RxGoodPkt': 25004812,
-                    'RxBadPkt': 25
-                }]
+            "type": {
+                "stats": [
+                    {
+                        "Port": 1,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "1000Full",
+                        "Link Status Raw": 6,
+                        "TxGoodPkt": 10085762,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 1062303,
+                        "RxBadPkt": 0,
+                    },
+                    {
+                        "Port": 2,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "Link Down",
+                        "Link Status Raw": 0,
+                        "TxGoodPkt": 0,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 0,
+                        "RxBadPkt": 0,
+                    },
+                    {
+                        "Port": 3,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "1000Full",
+                        "Link Status Raw": 6,
+                        "TxGoodPkt": 23127099,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 8488829,
+                        "RxBadPkt": 0,
+                    },
+                    {
+                        "Port": 4,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "Link Down",
+                        "Link Status Raw": 0,
+                        "TxGoodPkt": 0,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 0,
+                        "RxBadPkt": 0,
+                    },
+                    {
+                        "Port": 5,
+                        "Status": "Disabled",
+                        "Status Raw": 1,
+                        "Link Status": "1000Full",
+                        "Link Status Raw": 6,
+                        "TxGoodPkt": 9715369,
+                        "TxBadPkt": 0,
+                        "RxGoodPkt": 25004812,
+                        "RxBadPkt": 25,
+                    },
+                ]
             },
-            'hostname': {},
-            'mac': {},
-            'ip_addr': {
-                'vlan_enabled': '01',
-                'vlan': [{
-                    'VLAN ID': 1,
-                    'Member Ports': '1,2,3,4,5',
-                    'Tagged Ports': '',
-                    'VLAN Name': 'Default_VLAN'
-                }, {
-                    'VLAN ID': 50,
-                    'Member Ports': '1,5',
-                    'Tagged Ports': '',
-                    'VLAN Name': 'GAMING'
-                }],
-                'vlan_filler': ' '
+            "hostname": {},
+            "mac": {},
+            "ip_addr": {
+                "vlan_enabled": "01",
+                "vlan": [
+                    {
+                        "VLAN ID": 1,
+                        "Member Ports": "1,2,3,4,5",
+                        "Tagged Ports": "",
+                        "VLAN Name": "Default_VLAN",
+                    },
+                    {
+                        "VLAN ID": 50,
+                        "Member Ports": "1,5",
+                        "Tagged Ports": "",
+                        "VLAN Name": "GAMING",
+                    },
+                ],
+                "vlan_filler": " ",
             },
-            'ip_mask': {},
-            'gateway': {},
-            'firmware': {
-                'ports': '05:01:00:01:06:00:00'
-            },
-            'hardware': {},
-            'dhcp': {},
-            'num_ports': {
-                'trunk': '01:00:00:00:00'
-            }
+            "ip_mask": {},
+            "gateway": {},
+            "firmware": {"ports": "05:01:00:01:06:00:00"},
+            "hardware": {},
+            "dhcp": {},
+            "num_ports": {"trunk": "01:00:00:00:00"},
         }
 
 
