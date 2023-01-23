@@ -99,7 +99,7 @@ async def test_stats_query():
     """Test stats query."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet = bytes.fromhex(base64.b64decode(TEST_PACKETS[2]).decode("utf-8"))
+        packet = bytes.fromhex(base64.b64decode(TEST_PACKETS[9]).decode("utf-8"))
         mock_socket.recvfrom.side_effect = [(packet, ""), ("", "")]
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
@@ -178,25 +178,25 @@ async def test_update_data():
     """Test update data function."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet1 = bytes.fromhex(base64.b64decode(TEST_PACKETS[6]).decode("utf-8"))
-        packet2 = bytes.fromhex(base64.b64decode(TEST_PACKETS[7]).decode("utf-8"))
+        packet1 = bytes.fromhex(base64.b64decode(TEST_PACKETS[9]).decode("utf-8"))
+        packet2 = bytes.fromhex(base64.b64decode(TEST_PACKETS[10]).decode("utf-8"))
         packet3 = bytes.fromhex(base64.b64decode(TEST_PACKETS[2]).decode("utf-8"))
         packet4 = bytes.fromhex(base64.b64decode(TEST_PACKETS[3]).decode("utf-8"))
         packet5 = bytes.fromhex(base64.b64decode(TEST_PACKETS[4]).decode("utf-8"))
         packet6 = bytes.fromhex(base64.b64decode(TEST_PACKETS[5]).decode("utf-8"))
+        packet7 = bytes.fromhex(base64.b64decode(TEST_PACKETS[6]).decode("utf-8"))
+        packet8 = bytes.fromhex(base64.b64decode(TEST_PACKETS[7]).decode("utf-8"))
+        packet9 = bytes.fromhex(base64.b64decode(TEST_PACKETS[8]).decode("utf-8"))
         mock_socket.recvfrom.side_effect = [
             (packet1, ""),
             (packet2, ""),
             (packet3, ""),
-            (packet1, ""),
-            (packet2, ""),
             (packet4, ""),
-            (packet1, ""),
-            (packet2, ""),
             (packet5, ""),
-            (packet1, ""),
-            (packet2, ""),
             (packet6, ""),
+            (packet7, ""),
+            (packet8, ""),
+            (packet9, ""),
             ("", ""),
         ]
 
@@ -212,68 +212,22 @@ async def test_update_data():
         )
 
         assert result == {
-            "type": {
-                "stats": [
-                    {
-                        "Port": 1,
-                        "Status": "Disabled",
-                        "Status Raw": 1,
-                        "Link Status": "1000Full",
-                        "Link Status Raw": 6,
-                        "TxGoodPkt": 10085762,
-                        "TxBadPkt": 0,
-                        "RxGoodPkt": 1062303,
-                        "RxBadPkt": 0,
-                    },
-                    {
-                        "Port": 2,
-                        "Status": "Disabled",
-                        "Status Raw": 1,
-                        "Link Status": "Link Down",
-                        "Link Status Raw": 0,
-                        "TxGoodPkt": 0,
-                        "TxBadPkt": 0,
-                        "RxGoodPkt": 0,
-                        "RxBadPkt": 0,
-                    },
-                    {
-                        "Port": 3,
-                        "Status": "Disabled",
-                        "Status Raw": 1,
-                        "Link Status": "1000Full",
-                        "Link Status Raw": 6,
-                        "TxGoodPkt": 23127099,
-                        "TxBadPkt": 0,
-                        "RxGoodPkt": 8488829,
-                        "RxBadPkt": 0,
-                    },
-                    {
-                        "Port": 4,
-                        "Status": "Disabled",
-                        "Status Raw": 1,
-                        "Link Status": "Link Down",
-                        "Link Status Raw": 0,
-                        "TxGoodPkt": 0,
-                        "TxBadPkt": 0,
-                        "RxGoodPkt": 0,
-                        "RxBadPkt": 0,
-                    },
-                    {
-                        "Port": 5,
-                        "Status": "Disabled",
-                        "Status Raw": 1,
-                        "Link Status": "1000Full",
-                        "Link Status Raw": 6,
-                        "TxGoodPkt": 9715369,
-                        "TxBadPkt": 0,
-                        "RxGoodPkt": 25004812,
-                        "RxBadPkt": 25,
-                    },
-                ]
+            "hostname": {
+                "type": "TL-SG105E",
+                "hostname": "switch7",
+                "mac": "70:4f:57:89:61:6a",
+                "firmware": "1.0.0 Build 20160715 Rel.38605",
+                "hardware": "TL-SG105E 3.0",
+                "dhcp": False,
+                "ip_addr": "192.168.1.109",
+                "ip_mask": "255.255.255.0",
+                "gateway": "192.168.1.4",
             },
-            "hostname": {},
-            "mac": {},
-            "ip_addr": {
+            "num_ports": {"num_ports": 5},
+            "ports": {"ports": "05:01:00:01:06:00:00"},
+            "trunk": {"trunk": "01:00:00:00:00"},
+            "mtu_vlan": {"mtu_vlan": "00:01"},
+            "vlan": {
                 "vlan_enabled": "01",
                 "vlan": [
                     {
@@ -291,12 +245,10 @@ async def test_update_data():
                 ],
                 "vlan_filler": " ",
             },
-            "ip_mask": {},
-            "gateway": {},
-            "firmware": {"ports": "05:01:00:01:06:00:00"},
-            "hardware": {},
-            "dhcp": {},
-            "num_ports": {"trunk": "01:00:00:00:00"},
+            "pvid": {
+                "pvid": [(1, 50), (2, 1), (3, 1), (4, 1), (5, 1)],
+                "vlan_filler": " ",
+            },
         }
 
         # Test recvfrom socket error
