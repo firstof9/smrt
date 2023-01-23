@@ -212,48 +212,43 @@ async def test_update_data():
         )
 
         assert result == {
-            'hostname': {
-                'type': 'TL-SG105E',
-                'hostname': 'switch7',
-                'mac': '70:4f:57:89:61:6a',
-                'firmware': '1.0.0 Build 20160715 Rel.38605',
-                'hardware': 'TL-SG105E 3.0',
-                'dhcp': False,
-                'ip_addr': '192.168.1.109',
-                'ip_mask': '255.255.255.0',
-                'gateway': '192.168.1.4'
+            "hostname": {
+                "type": "TL-SG105E",
+                "hostname": "switch7",
+                "mac": "70:4f:57:89:61:6a",
+                "firmware": "1.0.0 Build 20160715 Rel.38605",
+                "hardware": "TL-SG105E 3.0",
+                "dhcp": False,
+                "ip_addr": "192.168.1.109",
+                "ip_mask": "255.255.255.0",
+                "gateway": "192.168.1.4",
             },
-            'num_ports': {
-                'num_ports': 5
+            "num_ports": {"num_ports": 5},
+            "ports": {"ports": "05:01:00:01:06:00:00"},
+            "trunk": {"trunk": "01:00:00:00:00"},
+            "mtu_vlan": {"mtu_vlan": "00:01"},
+            "vlan": {
+                "vlan_enabled": "01",
+                "vlan": [
+                    {
+                        "VLAN ID": 1,
+                        "Member Ports": "1,2,3,4,5",
+                        "Tagged Ports": "",
+                        "VLAN Name": "Default_VLAN",
+                    },
+                    {
+                        "VLAN ID": 50,
+                        "Member Ports": "1,5",
+                        "Tagged Ports": "",
+                        "VLAN Name": "GAMING",
+                    },
+                ],
+                "vlan_filler": " ",
             },
-            'ports': {
-                'ports': '05:01:00:01:06:00:00'
+            "pvid": {
+                "pvid": [(1, 50), (2, 1), (3, 1), (4, 1), (5, 1)],
+                "vlan_filler": " ",
             },
-            'trunk': {
-                'trunk': '01:00:00:00:00'
-            },
-            'mtu_vlan': {
-                'mtu_vlan': '00:01'
-            },
-            'vlan': {
-                'vlan_enabled': '01',
-                'vlan': [{
-                    'VLAN ID': 1,
-                    'Member Ports': '1,2,3,4,5',
-                    'Tagged Ports': '',
-                    'VLAN Name': 'Default_VLAN'
-                }, {
-                    'VLAN ID': 50,
-                    'Member Ports': '1,5',
-                    'Tagged Ports': '',
-                    'VLAN Name': 'GAMING'
-                }],
-                'vlan_filler': ' '
-            },
-            'pvid': {
-                'pvid': [(1, 50), (2, 1), (3, 1), (4, 1), (5, 1)],
-                'vlan_filler': ' '
-            }
         }
 
         # Test recvfrom socket error
