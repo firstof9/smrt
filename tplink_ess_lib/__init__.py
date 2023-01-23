@@ -43,12 +43,12 @@ class TpLinkESS:
     }
 
     working_ids_tp = {
-        2: ("str", "hostname", 1, "Without arguments, shows switch details"),
+        2: ("str", "hostname", 1),
         10: ("dec", "num_ports", 0),
         4096: ("hex", "ports", 0),
         4608: ("hex", "trunk", 0),
         8192: ("hex", "mtu_vlan", 0),
-        8705: ("vlan", "vlan", 1, "Configure VLAN Membership"),
+        8705: ("vlan", "vlan", 1),
         8706: ("pvid", "pvid", 0),
         12288: ("bool", "qos1", 0),
         12289: ("hex", "qos2", 0),
@@ -56,6 +56,8 @@ class TpLinkESS:
         16384: ("stat", "stats", 0),
         17152: ("bool", "loop_prev", 0),
     }
+
+    tp_ids = {v[1]: k for k, v in working_ids_tp.items()}
 
     def __init__(self, host_mac: str = "", user: str = "", pwd: str = "") -> None:
         """Connect or discover a TP-Link ESS switch on the network."""
@@ -108,15 +110,16 @@ class TpLinkESS:
         net.login(switch_mac, self._user, self._pwd, testing)
         actions = TpLinkESS.working_ids_tp
 
-        for action in actions:
+        for action in actions.keys():
             try:
                 header, payload = net.query(  # pylint: disable=unused-variable
                     switch_mac=switch_mac,
                     op_code=Protocol.GET,
-                    payload=[(Protocol.tp_ids[action], b"")],
+                    payload=[(action, b"")],
                     testing=testing,
                 )
-                self._data[action] = self.parse_response(payload)
+                index = TpLinkESS.working_ids_tp[action][1]
+                self._data[index] = self.parse_response(payload)
             except ConnectionProblem:
                 break
 
