@@ -110,7 +110,7 @@ class TpLinkESS:
         net.login(switch_mac, self._user, self._pwd, testing)
         actions = TpLinkESS.working_ids_tp
 
-        for action in actions.keys():
+        for action in actions:
             try:
                 header, payload = net.query(  # pylint: disable=unused-variable
                     switch_mac=switch_mac,
