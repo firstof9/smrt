@@ -1,6 +1,5 @@
 """Library tests."""
 
-import asyncio
 import base64
 from unittest.mock import patch
 
@@ -254,7 +253,7 @@ async def test_update_data():
         # Test recvfrom socket error
         mock_socket.recvfrom.side_effect = OSError
         with pytest.raises(ConnectionProblem):
-            result = await tplink.update_data(switch_mac=TEST_SWITCH_MAC, testing=True)
+            await tplink.update_data(switch_mac=TEST_SWITCH_MAC, testing=True)
 
 
 async def test_missing_hostmac_exception():
