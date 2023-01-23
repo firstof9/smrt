@@ -130,7 +130,7 @@ class Protocol:
             raise AssertionError("invalid data length")
         if not data.endswith(Protocol.PACKET_END):
             raise AssertionError("data without packet end")
-        return data[0: Protocol.header["len"]], data[Protocol.header["len"]:]
+        return data[0 : Protocol.header["len"]], data[Protocol.header["len"] :]
 
     @staticmethod
     def interpret_header(header):
@@ -145,7 +145,7 @@ class Protocol:
         results = []
         while len(payload) > len(Protocol.PACKET_END):
             dtype, dlen = struct.unpack("!hh", payload[0:4])
-            data = payload[4: 4 + dlen]
+            data = payload[4 : 4 + dlen]
             results.append(
                 (
                     dtype,
@@ -153,7 +153,7 @@ class Protocol:
                     Protocol.interpret_value(data, Protocol.ids_tp[dtype][0]),
                 )
             )
-            payload = payload[4 + dlen:]
+            payload = payload[4 + dlen :]
         return results
 
     @staticmethod
@@ -164,7 +164,7 @@ class Protocol:
             payload_bytes += struct.pack("!hh", dtype, len(value))
             payload_bytes += value
         header["check_length"] = (
-                Protocol.header["len"] + len(payload_bytes) + len(Protocol.PACKET_END)
+            Protocol.header["len"] + len(payload_bytes) + len(Protocol.PACKET_END)
         )
         header = tuple(header[part] for part in Protocol.header["blank"])
         header_bytes = struct.pack(Protocol.header["fmt"], *header)
@@ -206,9 +206,9 @@ class Protocol:
     def set_vlan(vlan_num, member_mask, tagged_mask, vlan_name):
         """Set vlan entry."""
         value = (
-                struct.pack("!hii", vlan_num, member_mask, tagged_mask)
-                + vlan_name.encode("ascii")
-                + b"\x00"
+            struct.pack("!hii", vlan_num, member_mask, tagged_mask)
+            + vlan_name.encode("ascii")
+            + b"\x00"
         )
         return value
 
