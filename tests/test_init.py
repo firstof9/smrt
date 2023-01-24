@@ -116,7 +116,7 @@ async def test_stats_query():
             "stats": [
                 {
                     "Port": 1,
-                    "Status": "Disabled",
+                    "Status": "Enabled",
                     "Status Raw": 1,
                     "Link Status": "1000Full",
                     "Link Status Raw": 6,
@@ -127,7 +127,7 @@ async def test_stats_query():
                 },
                 {
                     "Port": 2,
-                    "Status": "Disabled",
+                    "Status": "Enabled",
                     "Status Raw": 1,
                     "Link Status": "Link Down",
                     "Link Status Raw": 0,
@@ -138,7 +138,7 @@ async def test_stats_query():
                 },
                 {
                     "Port": 3,
-                    "Status": "Disabled",
+                    "Status": "Enabled",
                     "Status Raw": 1,
                     "Link Status": "1000Full",
                     "Link Status Raw": 6,
@@ -149,7 +149,7 @@ async def test_stats_query():
                 },
                 {
                     "Port": 4,
-                    "Status": "Disabled",
+                    "Status": "Enabled",
                     "Status Raw": 1,
                     "Link Status": "Link Down",
                     "Link Status Raw": 0,
@@ -160,7 +160,7 @@ async def test_stats_query():
                 },
                 {
                     "Port": 5,
-                    "Status": "Disabled",
+                    "Status": "Enabled",
                     "Status Raw": 1,
                     "Link Status": "1000Full",
                     "Link Status Raw": 6,

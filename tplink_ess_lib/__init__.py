@@ -15,8 +15,8 @@ class TpLinkESS:
 
     RESULT_FIELD_LOOKUP = {
         "Status": {
-            0: "Enabled",
-            1: "Disabled",
+            0: "Disabled",
+            1: "Enabled",
         },
         "Link Status": {
             0: "Link Down",
