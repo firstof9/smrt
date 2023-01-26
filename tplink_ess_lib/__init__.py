@@ -149,12 +149,12 @@ class TpLinkESS:
         _LOGGER.debug("Payload in: %s", payload)
         output: Dict[str, Any] = {}
         for type_id, type_name, data in payload:  # pylint: disable=unused-variable
-            if type(data) in [tuple, list]:
+            if isinstance(data, (tuple, list)):
                 data = TpLinkESS._map_data_fields(type_name, data)
                 output[type_name] = output.get(type_name, []) + [data]
             else:
                 if type_name in output:
-                    if type(output[type_name]) == list:
+                    if isinstance(output[type_name], list):
                         output[type_name].append(data)
                     else:
                         output[type_name] = [output[type_name], data]
