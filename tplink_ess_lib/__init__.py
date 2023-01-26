@@ -78,7 +78,7 @@ class TpLinkESS:
             while True:
                 try:
                     header, payload = net.receive(testing)
-                    switches[header["switch_mac"]] = self.parse_response(payload)
+                    switches[header["switch_mac"]] = TpLinkESS.parse_response(payload)
                 except ConnectionProblem:
                     break
         return list(switches.values())
@@ -97,7 +97,7 @@ class TpLinkESS:
                 payload=[(Protocol.tp_ids[action], b"")],
                 testing=testing,
             )
-            return self.parse_response(payload)
+            return TpLinkESS.parse_response(payload)
 
     async def update_data(self, switch_mac, testing: bool = False) -> dict:
         """Refresh switch data."""
@@ -119,35 +119,47 @@ class TpLinkESS:
                     testing=testing,
                 )
                 index = TpLinkESS.working_ids_tp[action][1]
-                self._data[index] = self.parse_response(payload)
+                self._data[index] = TpLinkESS.parse_response(payload)
             except ConnectionProblem:
                 break
 
         return self._data
 
     @staticmethod
+    def _map_data_fields(type_name: str, data):
+        """Map data fields to a dict."""
+        if fields := TpLinkESS.RESULT_TYPE_FIELDS.get(type_name):
+            mapped_data = {}
+            for k, v in zip(fields, data):  # pylint: disable=invalid-name
+                # pylint: disable-next=invalid-name
+                if mv := TpLinkESS.RESULT_FIELD_LOOKUP.get(k):
+                    mapped_data[k] = mv.get(v)
+                    mapped_data[k + " Raw"] = v
+                else:
+                    mapped_data[k] = v
+            return mapped_data
+        return data
+
+    @staticmethod
     def parse_response(payload) -> Dict[str, Any]:
         """Parse the payload into a dict."""
-        # all payloads are list of tuple:3. if the third value is a
-        # tuple/list, it can be field-mapped
+        # all payloads are list of tuple:3.
+        # if the third value is a tuple/list, it can be field-mapped.
+        # if there are duplicate type_name, return a list.
         _LOGGER.debug("Payload in: %s", payload)
         output: Dict[str, Any] = {}
         for type_id, type_name, data in payload:  # pylint: disable=unused-variable
-            if type(data) in [tuple, list]:
-                if fields := TpLinkESS.RESULT_TYPE_FIELDS.get(type_name):
-                    mapped_data = {}
-                    for k, v in zip(fields, data):  # pylint: disable=invalid-name
-                        # pylint: disable-next=invalid-name
-                        if mv := TpLinkESS.RESULT_FIELD_LOOKUP.get(k):
-                            mapped_data[k] = mv.get(v)
-                            mapped_data[k + " Raw"] = v
-                        else:
-                            mapped_data[k] = v
-                    data = mapped_data
-                data_list = output.get(type_name, [])
-                data_list.append(data)
-                data = data_list
+            if isinstance(data, (tuple, list)):
+                data = TpLinkESS._map_data_fields(type_name, data)
+                output[type_name] = output.get(type_name, []) + [data]
+            else:
+                if type_name in output:
+                    if isinstance(output[type_name], list):
+                        output[type_name].append(data)
+                    else:
+                        output[type_name] = [output[type_name], data]
+                else:
+                    output[type_name] = data
 
-            output[type_name] = data
         _LOGGER.debug("Payload parse: %s", output)
         return output
