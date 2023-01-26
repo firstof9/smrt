@@ -126,7 +126,7 @@ class TpLinkESS:
         return self._data
 
     @staticmethod
-    def _map_data_fields(type_name: str, data: list) -> dict:
+    def _map_data_fields(type_name: str, data):
         """Map data fields to a dict."""
         if fields := TpLinkESS.RESULT_TYPE_FIELDS.get(type_name):
             mapped_data = {}
