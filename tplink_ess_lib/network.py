@@ -3,6 +3,7 @@
 import logging
 import random
 import socket
+from datetime import datetime, timedelta
 
 from .binary import mac_to_bytes, mac_to_str
 from .protocol import Protocol
@@ -29,6 +30,9 @@ class Network:
     BROADCAST_MAC = "00:00:00:00:00:00"
     UDP_SEND_TO_PORT = 29808
     UDP_RECEIVE_FROM_PORT = 29809
+
+    SOCKET_TIMEOUT = 2  # timeout for socket operations
+    RECEIVE_TIMEOUT = 10  # total amount of time to wait for tx/rx sequence
 
     def __init__(self, host_mac):
         """Initialize."""
@@ -91,7 +95,8 @@ class Network:
 
     def receive(self, testing: bool = False):
         """Wait for an incoming packet, then return header+payload as a tuple."""
-        while data := self.receive_socket():
+        end_time = datetime.now() + timedelta(seconds=Network.RECEIVE_TIMEOUT)
+        while (data := self.receive_socket()) and datetime.now() < end_time:
             data = Protocol.decode(data)
             _LOGGER.debug("Receive Packet: %s", data.hex())
             header, payload = Protocol.split(data)
