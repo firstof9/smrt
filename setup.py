@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 PROJECT_DIR = Path(__file__).parent.resolve()
 README_FILE = PROJECT_DIR / "README.md"
-VERSION = "0.4.2"
+VERSION = "0.4.3"
 
 setup(
     name="tplink-ess-lib",
@@ -19,7 +19,6 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=["test.*", "tests"]),
     python_requires=">=3.8",
-    install_requires=["netifaces"],
     entry_points={},
     include_package_data=True,
     zip_safe=False,
