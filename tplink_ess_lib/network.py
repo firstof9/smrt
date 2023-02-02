@@ -48,6 +48,7 @@ class Network:
         )
         self.s_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.s_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        self.s_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # Receiving socket
         self.r_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
