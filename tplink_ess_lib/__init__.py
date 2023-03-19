@@ -59,7 +59,9 @@ class TpLinkESS:
 
     tp_ids = {v[1]: k for k, v in working_ids_tp.items()}
 
-    def __init__(self, host_mac: str = "", user: str = "", pwd: str = "", testing: bool = False) -> None:
+    def __init__(
+        self, host_mac: str = "", user: str = "", pwd: str = "", testing: bool = False
+    ) -> None:
         """Connect or discover a TP-Link ESS switch on the network."""
         if not host_mac:
             _LOGGER.error("MAC address missing.")
