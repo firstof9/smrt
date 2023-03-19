@@ -34,11 +34,12 @@ class Network:
     SOCKET_TIMEOUT = 2  # timeout for socket operations
     RECEIVE_TIMEOUT = 10  # total amount of time to wait for tx/rx sequence
 
-    def __init__(self, host_mac):
+    def __init__(self, host_mac, testing: bool = False):
         """Initialize."""
         self.host_mac = host_mac
         self.sequence_id = random.randint(0, 1000)
         self.token_id = None
+        self.testing = testing
 
         # Sending socket
         self.s_socket = socket.socket(
@@ -94,7 +95,7 @@ class Network:
         # Send packet
         self.s_socket.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
 
-    def receive(self, testing: bool = False):
+    def receive(self):
         """Wait for an incoming packet, then return header+payload as a tuple."""
         end_time = datetime.now() + timedelta(seconds=Network.RECEIVE_TIMEOUT)
         while (data := self.receive_socket()) and datetime.now() < end_time:
@@ -107,7 +108,7 @@ class Network:
             _LOGGER.debug("Received Header: %s", str(header))
             _LOGGER.debug("Received Payload: %s", str(payload))
             # check sequence_id alignment
-            if self.sequence_id != header["sequence_id"] and not testing:
+            if self.sequence_id != header["sequence_id"] and not self.testing:
                 _LOGGER.debug(
                     "Ignoring sequence_id %d expected %d",
                     header["sequence_id"],
@@ -116,7 +117,7 @@ class Network:
                 continue
             # check host_mac alignment
             data_mac = mac_to_str(header["host_mac"])
-            if self.host_mac != data_mac and not testing:
+            if self.host_mac != data_mac and not self.testing:
                 _LOGGER.debug(
                     "Ignoring host-mac %s expected %s", data_mac, self.host_mac
                 )
@@ -134,7 +135,7 @@ class Network:
             return False
         return data
 
-    def query(self, switch_mac, op_code, payload, testing: bool = False):
+    def query(self, switch_mac, op_code, payload):
         """
         Send packet to switch.
 
@@ -142,7 +143,7 @@ class Network:
         return header+payload as a tuple.
         """
         self.send(switch_mac, op_code, payload)
-        return self.receive(testing)
+        return self.receive()
 
     @staticmethod
     def login_dict(username, password):
@@ -152,16 +153,10 @@ class Network:
             (Protocol.get_id("password"), password.encode("ascii") + b"\x00"),
         ]
 
-    def login(
-        self, switch_mac: str, username: str, password: str, testing: bool = False
-    ):
+    def login(self, switch_mac: str, username: str, password: str):
         """Send login credentials to switch."""
-        self.query(
-            switch_mac, Protocol.GET, [(Protocol.get_id("get_token_id"), b"")], testing
-        )
-        self.query(
-            switch_mac, Protocol.LOGIN, self.login_dict(username, password), testing
-        )
+        self.query(switch_mac, Protocol.GET, [(Protocol.get_id("get_token_id"), b"")])
+        self.query(switch_mac, Protocol.LOGIN, self.login_dict(username, password))
 
     def set(self, switch_mac, username, password, payload):
         """Authenticate to the switch."""
