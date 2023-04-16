@@ -23,9 +23,9 @@ async def test_discovery():
         packet = bytes.fromhex(base64.b64decode(TEST_PACKETS[0]).decode("utf-8"))
         mock_socket.recvfrom.side_effect = [(packet, ""), ("", "")]
 
-        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
 
-        result = await tplink.discovery(testing=True)
+        result = await tplink.discovery()
 
         # Verify timeout called with proper value
         mock_socket.settimeout.assert_called_with(10)
@@ -57,9 +57,9 @@ async def test_discovery_multi():
         packet2 = bytes.fromhex(base64.b64decode(TEST_PACKETS[1]).decode("utf-8"))
         mock_socket.recvfrom.side_effect = [(packet1, ""), (packet2, ""), ("", "")]
 
-        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
 
-        result = await tplink.discovery(testing=True)
+        result = await tplink.discovery()
 
         # Verify timeout called with proper value
         mock_socket.settimeout.assert_called_with(10)
@@ -101,9 +101,9 @@ async def test_stats_query():
         packet = bytes.fromhex(base64.b64decode(TEST_PACKETS[9]).decode("utf-8"))
         mock_socket.recvfrom.side_effect = [(packet, ""), ("", "")]
 
-        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
 
-        result = await tplink.query(TEST_SWITCH_MAC, "stats", testing=True)
+        result = await tplink.query(TEST_SWITCH_MAC, "stats")
 
         # Verify timeout called with proper value
         mock_socket.settimeout.assert_called_with(10)
@@ -199,9 +199,9 @@ async def test_update_data():
             ("", ""),
         ]
 
-        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
+        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
 
-        result = await tplink.update_data(switch_mac=TEST_SWITCH_MAC, testing=True)
+        result = await tplink.update_data(switch_mac=TEST_SWITCH_MAC)
 
         # Verify timeout called with proper value
         mock_socket.settimeout.assert_called_with(10)
@@ -261,7 +261,7 @@ async def test_update_data():
         # Test recvfrom socket error
         mock_socket.recvfrom.side_effect = OSError
         with pytest.raises(ConnectionProblem):
-            await tplink.update_data(switch_mac=TEST_SWITCH_MAC, testing=True)
+            await tplink.update_data(switch_mac=TEST_SWITCH_MAC)
 
 
 async def test_missing_hostmac_exception():
@@ -276,12 +276,12 @@ async def test_binding_exceptions():
         mock_socket = mock_socket.return_value
         mock_socket.bind.side_effect = OSError
         with pytest.raises(OSError):
-            tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
-            await tplink.discovery(testing=True)
+            tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
+            await tplink.discovery()
         mock_socket.bind.side_effect = InterfaceProblem
         with pytest.raises(InterfaceProblem):
-            tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)
-            await tplink.discovery(testing=True)
+            tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
+            await tplink.discovery()
         mock_socket.bind.side_effect = InterfaceProblem
         with pytest.raises(InterfaceProblem):
             tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC)

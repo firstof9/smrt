@@ -59,7 +59,9 @@ class TpLinkESS:
 
     tp_ids = {v[1]: k for k, v in working_ids_tp.items()}
 
-    def __init__(self, host_mac: str = "", user: str = "", pwd: str = "") -> None:
+    def __init__(
+        self, host_mac: str = "", user: str = "", pwd: str = "", testing: bool = False
+    ) -> None:
         """Connect or discover a TP-Link ESS switch on the network."""
         if not host_mac:
             _LOGGER.error("MAC address missing.")
@@ -69,45 +71,45 @@ class TpLinkESS:
         self._pwd = pwd
         self._host_mac = host_mac
         self._data: Dict[Any, Any] = {}
+        self._testing = testing
 
-    async def discovery(self, testing: bool = False) -> list[dict]:
+    async def discovery(self) -> list[dict]:
         """Return a list of unique switches found by discovery."""
         switches = {}
-        with Network(self._host_mac) as net:
+        with Network(self._host_mac, testing=self._testing) as net:
             net.send(Network.BROADCAST_MAC, Protocol.DISCOVERY, {})
             while True:
                 try:
-                    header, payload = net.receive(testing)
+                    header, payload = net.receive()
                     switches[header["switch_mac"]] = TpLinkESS.parse_response(payload)
                 except ConnectionProblem:
                     break
         return list(switches.values())
 
-    async def query(self, switch_mac: str, action: str, testing: bool = False) -> dict:
+    async def query(self, switch_mac: str, action: str) -> dict:
         """
         Send a query.
 
         Sends a query to a specific switch and return the results
         as a dict.
         """
-        with Network(host_mac=self._host_mac) as net:
+        with Network(host_mac=self._host_mac, testing=self._testing) as net:
             header, payload = net.query(  # pylint: disable=unused-variable
                 switch_mac=switch_mac,
                 op_code=Protocol.GET,
                 payload=[(Protocol.tp_ids[action], b"")],
-                testing=testing,
             )
             return TpLinkESS.parse_response(payload)
 
-    async def update_data(self, switch_mac, testing: bool = False) -> dict:
+    async def update_data(self, switch_mac) -> dict:
         """Refresh switch data."""
         try:
-            net = Network(host_mac=self._host_mac)
+            net = Network(host_mac=self._host_mac, testing=self._testing)
         except OSError as err:
             _LOGGER.error("Problems with network interface: %s", err)
             raise err
         # Login to switch
-        net.login(switch_mac, self._user, self._pwd, testing)
+        net.login(switch_mac, self._user, self._pwd)
         actions = TpLinkESS.working_ids_tp
 
         for action in actions:
@@ -116,7 +118,6 @@ class TpLinkESS:
                     switch_mac=switch_mac,
                     op_code=Protocol.GET,
                     payload=[(action, b"")],
-                    testing=testing,
                 )
                 index = TpLinkESS.working_ids_tp[action][1]
                 self._data[index] = TpLinkESS.parse_response(payload)
