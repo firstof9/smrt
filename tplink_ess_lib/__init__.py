@@ -113,7 +113,10 @@ class TpLinkESS:
         if action_names is None:
             actions = TpLinkESS.working_ids_tp
         else:
-            actions = {TpLinkESS.tp_ids[name]: TpLinkESS.working_ids_tp[TpLinkESS.tp_ids[name]] for name in action_names}
+            actions = {
+                TpLinkESS.tp_ids[name]: TpLinkESS.working_ids_tp[TpLinkESS.tp_ids[name]]
+                for name in action_names
+            }
 
         for action in actions:
             try:
