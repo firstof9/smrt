@@ -101,8 +101,8 @@ class TpLinkESS:
             )
             return TpLinkESS.parse_response(payload)
 
-    async def update_data(self, switch_mac) -> dict:
-        """Refresh switch data."""
+    async def update_data(self, switch_mac, action_names=None) -> dict:
+        """Refresh switch data. Optional list of items to query (default all)."""
         try:
             net = Network(host_mac=self._host_mac, testing=self._testing)
         except OSError as err:
@@ -110,7 +110,13 @@ class TpLinkESS:
             raise err
         # Login to switch
         net.login(switch_mac, self._user, self._pwd)
-        actions = TpLinkESS.working_ids_tp
+        if action_names is None:
+            actions = TpLinkESS.working_ids_tp
+        else:
+            actions = {
+                TpLinkESS.tp_ids[name]: TpLinkESS.working_ids_tp[TpLinkESS.tp_ids[name]]
+                for name in action_names
+            }
 
         for action in actions:
             try:

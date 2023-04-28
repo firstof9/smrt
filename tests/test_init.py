@@ -264,6 +264,52 @@ async def test_update_data():
             await tplink.update_data(switch_mac=TEST_SWITCH_MAC)
 
 
+async def test_partial_update_data():
+    """Test update data function with subset."""
+    with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
+        mock_socket = mock_socket.return_value
+        packet1 = bytes.fromhex(base64.b64decode(TEST_PACKETS[9]).decode("utf-8"))
+        packet2 = bytes.fromhex(base64.b64decode(TEST_PACKETS[10]).decode("utf-8"))
+        packet3 = bytes.fromhex(base64.b64decode(TEST_PACKETS[2]).decode("utf-8"))
+        packet5 = bytes.fromhex(base64.b64decode(TEST_PACKETS[4]).decode("utf-8"))
+        mock_socket.recvfrom.side_effect = [
+            (packet1, ""),
+            (packet2, ""),
+            (packet3, ""),
+            (packet5, ""),
+            ("", ""),
+        ]
+
+        tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
+
+        result = await tplink.update_data(
+            switch_mac=TEST_SWITCH_MAC, action_names=["hostname", "ports"]
+        )
+
+        assert result == {
+            "hostname": {
+                "type": "TL-SG105E",
+                "hostname": "switch7",
+                "mac": "70:4f:57:89:61:6a",
+                "firmware": "1.0.0 Build 20160715 Rel.38605",
+                "hardware": "TL-SG105E 3.0",
+                "dhcp": False,
+                "ip_addr": "192.168.1.109",
+                "ip_mask": "255.255.255.0",
+                "gateway": "192.168.1.4",
+            },
+            "ports": {
+                "ports": [
+                    "01:01:00:01:06:00:00",
+                    "02:01:00:01:00:00:00",
+                    "03:01:00:01:06:00:00",
+                    "04:01:00:01:00:00:00",
+                    "05:01:00:01:06:00:00",
+                ]
+            },
+        }
+
+
 async def test_missing_hostmac_exception():
     """Test missing host mac address exception."""
     with pytest.raises(MissingMac):
