@@ -16,12 +16,16 @@ TEST_HOST_MAC = "00:00:00:00:00:00"
 TEST_SWITCH_MAC = "70:4f:57:89:61:6a"
 
 
+def _get_packets(keys: list[str]):
+    """Get packets from the test packets dictionary as a list of tuples with terminating ("","")."""
+    return [(TEST_PACKETS[key], "") for key in keys] + [("", "")]
+
+
 async def test_discovery():
     """Test switch discovery."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet = bytes.fromhex(base64.b64decode(TEST_PACKETS[0]).decode("utf-8"))
-        mock_socket.recvfrom.side_effect = [(packet, ""), ("", "")]
+        mock_socket.recvfrom.side_effect = _get_packets(["discovery1"])
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
 
@@ -53,9 +57,7 @@ async def test_discovery_multi():
     """Test switch discovery with multple switches."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet1 = bytes.fromhex(base64.b64decode(TEST_PACKETS[0]).decode("utf-8"))
-        packet2 = bytes.fromhex(base64.b64decode(TEST_PACKETS[1]).decode("utf-8"))
-        mock_socket.recvfrom.side_effect = [(packet1, ""), (packet2, ""), ("", "")]
+        mock_socket.recvfrom.side_effect = _get_packets(["discovery1", "discovery2"])
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
 
@@ -98,8 +100,7 @@ async def test_stats_query():
     """Test stats query."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet = bytes.fromhex(base64.b64decode(TEST_PACKETS[9]).decode("utf-8"))
-        mock_socket.recvfrom.side_effect = [(packet, ""), ("", "")]
+        mock_socket.recvfrom.side_effect = _get_packets(["stats"])
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
 
@@ -177,27 +178,20 @@ async def test_update_data():
     """Test update data function."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet1 = bytes.fromhex(base64.b64decode(TEST_PACKETS[9]).decode("utf-8"))
-        packet2 = bytes.fromhex(base64.b64decode(TEST_PACKETS[10]).decode("utf-8"))
-        packet3 = bytes.fromhex(base64.b64decode(TEST_PACKETS[2]).decode("utf-8"))
-        packet4 = bytes.fromhex(base64.b64decode(TEST_PACKETS[3]).decode("utf-8"))
-        packet5 = bytes.fromhex(base64.b64decode(TEST_PACKETS[4]).decode("utf-8"))
-        packet6 = bytes.fromhex(base64.b64decode(TEST_PACKETS[5]).decode("utf-8"))
-        packet7 = bytes.fromhex(base64.b64decode(TEST_PACKETS[6]).decode("utf-8"))
-        packet8 = bytes.fromhex(base64.b64decode(TEST_PACKETS[7]).decode("utf-8"))
-        packet9 = bytes.fromhex(base64.b64decode(TEST_PACKETS[8]).decode("utf-8"))
-        mock_socket.recvfrom.side_effect = [
-            (packet1, ""),
-            (packet2, ""),
-            (packet3, ""),
-            (packet4, ""),
-            (packet5, ""),
-            (packet6, ""),
-            (packet7, ""),
-            (packet8, ""),
-            (packet9, ""),
-            ("", ""),
-        ]
+
+        mock_socket.recvfrom.side_effect = _get_packets(
+            [
+                "stats",
+                "login1",
+                "hostname",
+                "num_ports",
+                "ports",
+                "trunk",
+                "mtu_vlan",
+                "vlan",
+                "pvid",
+            ]
+        )
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
 
@@ -268,17 +262,9 @@ async def test_partial_update_data():
     """Test update data function with subset."""
     with patch("tplink_ess_lib.network.socket.socket") as mock_socket:
         mock_socket = mock_socket.return_value
-        packet1 = bytes.fromhex(base64.b64decode(TEST_PACKETS[9]).decode("utf-8"))
-        packet2 = bytes.fromhex(base64.b64decode(TEST_PACKETS[10]).decode("utf-8"))
-        packet3 = bytes.fromhex(base64.b64decode(TEST_PACKETS[2]).decode("utf-8"))
-        packet5 = bytes.fromhex(base64.b64decode(TEST_PACKETS[4]).decode("utf-8"))
-        mock_socket.recvfrom.side_effect = [
-            (packet1, ""),
-            (packet2, ""),
-            (packet3, ""),
-            (packet5, ""),
-            ("", ""),
-        ]
+        mock_socket.recvfrom.side_effect = _get_packets(
+            ["login1", "login2", "hostname", "ports"]
+        )
 
         tplink = tplink_ess_lib.TpLinkESS(host_mac=TEST_HOST_MAC, testing=True)
 
